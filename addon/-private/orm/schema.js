@@ -1,35 +1,35 @@
-import { Attr } from './model/attr';
-import { BelongsTo } from './model/belongs-to';
-import { HasMany } from './model/has-many';
-import { singularize } from 'ember-inflector';
-import Model from './model';
-import EditableModel from './editable-model';
+import { Attr } from './model/relationships/attr';
+import Model from './model/model';
+import EditableModel from './model/editable-model';
+import Relationship from './model/relationships/-relationship';
+import Ember from 'ember';
 
-export const EDITABLE = Symbol('-editable-model-type');
+import { EDITABLE } from './model/symbols';
+
+const {
+  get
+  } = Ember;
 
 export class Schema {
 
-  constructor(shape, options) {
+  constructor(shape, options = {}) {
+    this.modelName = options.modelName;
     this.attributes = null;
     this.relationships = null;
     this.shape = null;
     this.createFromShape = false;
-    this.options = options;
+    this.editable = options.editable;
 
     // injected at initialization
-    this.orm = null;
+    this.recordStore = null;
 
-    this._create(shape);
-  }
-
-  static create(shape, options) {
-    return new Schema(shape, options);
+    this._create(shape, options);
   }
 
   _create(shape, options) {
     let keys = Object.keys(shape);
-    let attributes = {};
-    let relationships = {};
+    let attributes = Object.create(null);
+    let relationships = Object.create(null);
 
     for (let i = 0; i < keys.length; i++) {
       let key = keys[i];
@@ -37,17 +37,15 @@ export class Schema {
 
       if (value instanceof Attr) {
         attributes[key] = value;
-      } else if (value instanceof BelongsTo) {
-        relationships[key] = value;
+      } else if (value instanceof Relationship) {
         value.prop = key;
-        value.modelName = value.modelName || key;
-        shape[key] = undefined;
-      } else if (value instanceof HasMany) {
+        value.primaryModelName = options.modelName;
+        value.recalc();
+
         relationships[key] = value;
-        value.prop = key;
-        value.modelName = value.modelName || singularize(key);
         shape[key] = undefined;
       }
+
     }
 
     this.attributes = attributes;
@@ -57,14 +55,15 @@ export class Schema {
     this.createFromShape = typeof shape.create === 'function' && shape._isEmberOrmModel;
 
     if (!this.createFromShape) {
-      this._artificialShape = Schema.createArtificialShape(options.editable ? EditableModel : Model, shape, options);
+      this._artificialShape = this.createArtificialShape(options.editable ? EditableModel : Model, shape, options);
     }
   }
 
-  static createArtificialShape(BaseClass, shape, options) {
+  createArtificialShape(BaseClass, shape, options) {
     let keys = Object.keys(shape);
     let props = [];
     let attrs = [];
+    let schema = this;
 
     for (let i = 0; i < keys.length; i++) {
       let key = keys[i];
@@ -78,6 +77,7 @@ export class Schema {
 
     class ArtificialShape extends BaseClass {
       constructor(data = {}) {
+        super(schema);
         this[EDITABLE] = options.editable;
 
         for (let attr of attrs) {
@@ -92,18 +92,64 @@ export class Schema {
 
   }
 
-  generateRecord(data) {
-    if (this.createFromShape) {
-      return this.shape.create(this._prepRecordData(data));
+  cloneRecord(record) {
+    let modelData = {};
+
+    if (!this.createFromShape) {
+      for (let attrKey in this.attributes) {
+        modelData[attrKey] = record[attrKey];
+      }
+
+      for (let relKey in this.relationships) {
+        modelData[relKey] = record[relKey];
+      }
     } else {
-      return new this._artificialShape(this._prepRecordData(data));
+      for (let attrKey in this.attributes) {
+        modelData[attrKey] = get(record, attrKey);
+      }
+
+      for (let relKey in this.relationships) {
+        modelData[relKey] = get(record, relKey);
+      }
+    }
+
+    return this._generateRecord(modelData);
+  }
+
+  _generateRecord(data) {
+    if (this.createFromShape) {
+      return this.shape.create(data);
+    } else {
+      return new this._artificialShape(data);
     }
   }
 
-  _prepRecordData(data) {
-
+  generateRecord(data) {
+    this._generateRecord(this._prepRecordData(data));
   }
 
+  _prepRecordData(data) {
+    let modelData = {};
+
+    for (let attrKey in this.attributes) {
+      let attr = this.attributes[attrKey];
+
+      modelData[attrKey] = data[attrKey] || getDefaultValue(attr);
+    }
+
+    for (let relKey in this.relationships) {
+      let rel = this.relationships[relKey];
+
+      modelData[relKey] = data[relKey] ? rel.fulfill(data[relKey]) : undefined;
+    }
+  }
+
+}
+
+function getDefaultValue(attr) {
+  return attr.defaultValue ?
+    (typeof attr.defaultValue === 'function' ? attr.defaultValue() : attr.defaultValue)
+    : undefined;
 }
 
 export default Schema;

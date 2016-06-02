@@ -1,6 +1,6 @@
 import Schema from 'ember-orm/-private/orm/schema';
-import { hasMany, HasMany } from 'ember-orm/-private/orm/model/has-many';
-import { belongsTo } from 'ember-orm/-private/orm/model/belongs-to';
+import { manyToNone, ManyToNone } from 'ember-orm/-private/orm/model/relationships/many-to-none';
+import { oneToNone } from 'ember-orm/-private/orm/model/relationships/one-to-none';
 
 import { module, test } from 'qunit';
 
@@ -11,10 +11,10 @@ module('Unit | orm | schema', {
 test('default behavior works', function(assert) {
   assert.ok(Schema);
   let a = {};
-  let schema = Schema.create({ foo: a, bars: hasMany('bar'), balls: hasMany(), bat: belongsTo() });
+  let schema = new Schema({ foo: a, bars: manyToNone('bar'), balls: manyToNone(), bat: oneToNone() });
 
   assert.ok(schema instanceof Schema);
-  assert.ok(schema.relationships.bars instanceof HasMany);
+  assert.ok(schema.relationships.bars instanceof ManyToNone);
   assert.equal(schema.relationships.bars.prop, 'bars');
   assert.equal(schema.relationships.bars.modelName, 'bar');
   assert.equal(schema.relationships.balls.modelName, 'ball');

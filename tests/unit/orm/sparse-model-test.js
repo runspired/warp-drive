@@ -1,4 +1,4 @@
-import { SparseModel, ModelReferenceSymbol } from 'ember-orm/-private/orm/sparse-model';
+import { SparseModel, ModelReferenceSymbol } from 'ember-orm/-private/orm/model/relationships/joins/sparse-model';
 import { module, test } from 'qunit';
 
 module('Unit | orm | sparse-model', {

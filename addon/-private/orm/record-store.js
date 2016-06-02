@@ -22,7 +22,7 @@ export default class RecordStore {
     if (!schema) {
       let shape = this._lookupFactory(`model:${modelName}`);
 
-      schema = new Schema(shape, { editable: shape[EDITABLE] });
+      schema = new Schema(shape, { modelName, editable: shape[EDITABLE] });
 
       this.schemas.set(modelName, schema);
       this.records.set(modelName, new Map());
@@ -33,7 +33,16 @@ export default class RecordStore {
 
   pushRecord(modelName, data) {
     let schema = this.schemaFor(modelName);
-    let record = schema.generateRecord(data);
+    let record = this.records.get(modelName).get(data.id);
+
+    if (record) {
+      schema.updateRecord(record, data);
+    } else {
+      record = schema.generateRecord(data);
+      this.records.get(modelName).set(record.id, record);
+    }
+
+    return record;
   }
 
 }
