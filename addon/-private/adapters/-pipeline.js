@@ -1,18 +1,17 @@
-import { Promise } from 'rsvp';
-
+import RSVP from 'rsvp';
 
 
 export default class Pipeline {
 
   constructor(pipe, methods) {
-    let deferred = Promise.defer();
+    let deferred = RSVP.defer();
     let chain = deferred.promise;
     let firstStep = methods.shift();
     let request;
     let response = {};
 
     chain = chain
-              .then(pipe[firstStep].bind(pipe))
+              .then((args) => { return pipe[firstStep](...args); })
               .then((req) => { request = req; });
 
     for (let method of methods) {
@@ -49,14 +48,18 @@ export default class Pipeline {
     chain.finally(() => {
       chain = null;
       deferred = null;
+      this.chain = null;
       this.deferred = null;
     });
 
     this.deferred = deferred;
+    this.chain = chain;
   }
 
   pipe(...args) {
-    return this.deferred.resolve(...args);
+    this.deferred.resolve(args);
+
+    return this.chain;
   }
 
 }

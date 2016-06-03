@@ -1,5 +1,6 @@
 import { EDITABLE, Schema } from './schema';
 import SparseModel from './model/relationships/joins/sparse-model';
+import { singularize } from 'ember-inflector';
 
 export default class RecordStore {
 
@@ -7,6 +8,8 @@ export default class RecordStore {
     this.owner = owner;
     this.schemas = new Map();
     this.records = new Map();
+    this.adapters = new Map();
+    this.serializers = new Map();
   }
 
   _lookup(path) {
@@ -52,14 +55,59 @@ export default class RecordStore {
     return schema;
   }
 
-  pushRecord(modelName, data) {
+  adapterFor(modelName) {
+    let adapter = this.adapters.get(modelName);
+
+    if (!adapter) {
+      let Adapter = this._lookupFactory(`adapter:${modelName}`);
+
+      if (!Adapter) {
+        if (modelName === 'application') {
+          throw new Error('You must define an application adapter!');
+        }
+        return this.adapterFor('application');
+      }
+
+      adapter = new Adapter();
+      adapter.recordStore = this;
+
+      this.adapters.set(modelName, adapter);
+    }
+
+    return adapter;
+  }
+
+  serializerFor(modelName) {
+    let serializer = this.serializers.get(modelName);
+
+    if (!serializer) {
+      let Serializer = this._lookupFactory(`serializer:${modelName}`);
+
+      if (!Serializer) {
+        if (modelName === 'application') {
+          throw new Error('You must define an application serializer!');
+        }
+        return this.serializerFor('application');
+      }
+
+      serializer = new Serializer();
+      serializer.recordStore = this;
+
+      this.serializers.set(modelName, serializer);
+    }
+
+    return serializer;
+  }
+
+  pushRecord(jsonApiReference) {
+    let modelName = singularize(jsonApiReference.type);
     let schema = this.schemaFor(modelName);
-    let record = this.records.get(modelName).get(data.id);
+    let record = this.records.get(modelName).get(jsonApiReference.id);
 
     if (record) {
-      schema.updateRecord(record, data);
+      schema.updateRecord(record, jsonApiReference);
     } else {
-      record = schema.generateRecord(data);
+      record = schema.generateRecord(jsonApiReference);
       this.records.get(modelName).set(record.id, record);
     }
 

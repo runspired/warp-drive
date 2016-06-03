@@ -122,29 +122,38 @@ export class Schema {
     }
   }
 
-  generateRecord(data) {
-    let record = this._generateRecord(this._prepRecordData(data));
+  generateRecord(jsonApiReference) {
+    let preppedData = this._prepRecordData(jsonApiReference);
+    preppedData.id = jsonApiReference.id;
 
-    this._populateRelationships(record, data);
+    let record = this._generateRecord(preppedData);
+
+    this._populateRelationships(record, jsonApiReference);
     return record;
   }
 
-  _populateRelationships(record, data) {
-    for (let relKey in this.relationships) {
-      let rel = this.relationships[relKey];
+  _populateRelationships(record, jsonApiReference) {
+    if (jsonApiReference.relationships) {
+      for (let relKey in this.relationships) {
+        let rel = this.relationships[relKey];
 
-      record[relKey] = data[relKey] ? rel.fulfill(record, data[relKey]) : undefined;
+        record[relKey] = jsonApiReference.relationships[relKey] ? rel.fulfill(record, jsonApiReference.relationships[relKey]) : undefined;
+      }
     }
   }
 
-  _prepRecordData(data) {
+  _prepRecordData(jsonApiReference) {
     let modelData = {};
 
-    for (let attrKey in this.attributes) {
-      let attr = this.attributes[attrKey];
+    if (jsonApiReference.attributes) {
+      for (let attrKey in this.attributes) {
+        let attr = this.attributes[attrKey];
 
-      modelData[attrKey] = data[attrKey] || getDefaultValue(attr);
+        modelData[attrKey] = jsonApiReference.attributes[attrKey] || getDefaultValue(attr);
+      }
     }
+
+    return modelData;
   }
 
 }

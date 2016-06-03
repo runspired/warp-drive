@@ -8,14 +8,18 @@ const {
 export default Service.extend({
 
   __isEmberOrmStore: true,
-
-  orm: inject.service('orm'),
+  data: null,
 
   createRecord() {},
 
   deleteRecord() {},
 
-  findAll() {},
+  findAll(modelName, options) {
+    let schema = this.data.schemaFor(modelName);
+
+    return this.data.adapterFor(modelName)
+      .pipe('findAll', schema, null, options);
+  },
 
   findRecord() {},
 

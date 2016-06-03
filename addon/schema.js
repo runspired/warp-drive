@@ -1,6 +1,10 @@
 import Schema from './-private/orm/schema';
-export { default } from './-private/orm/model/relationships/has-many';
-export { default } from './-private/orm/model/relationships/belongs-to';
-export { default } from './-private/orm/model/relationships/attr';
+import { attr, hasMany, belongsTo } from './-private/orm/model/relationships';
+
+export {
+  attr,
+  hasMany,
+  belongsTo
+}
 
 export default Schema;

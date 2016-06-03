@@ -1,10 +1,10 @@
 import attr from './attr';
-import ManyToMany from './many-to-many';
-import HasMany from './has-many';
-import ManyToNone from './many-to-none';
-import BelongsTo from './belongs-to';
-import OneToNone from './one-to-none';
-import OneToOne from './one-to-one';
+import { manyToMany, ManyToMany } from './many-to-many';
+import { hasMany, HasMany } from './has-many';
+import { manyToNone, ManyToNone } from './many-to-none';
+import { belongsTo, BelongsTo } from './belongs-to';
+import { oneToNone, OneToNone } from './one-to-none';
+import { oneToOne, OneToOne } from './one-to-one';
 
 export {
   attr,
@@ -13,7 +13,13 @@ export {
   HasMany,
   BelongsTo,
   OneToNone,
-  OneToOne
+  OneToOne,
+  manyToMany,
+  manyToNone,
+  hasMany,
+  belongsTo,
+  oneToNone,
+  oneToOne
 };
 
 export default {
@@ -23,5 +29,11 @@ export default {
   HasMany,
   BelongsTo,
   OneToNone,
-  OneToOne
+  OneToOne,
+  manyToMany,
+  manyToNone,
+  hasMany,
+  belongsTo,
+  oneToNone,
+  oneToOne
 };
