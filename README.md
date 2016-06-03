@@ -1,26 +1,8 @@
 # Ember-orm
 
-This README outlines the details of collaborating on this Ember addon.
+This is a **VERY WIP** experimental alternative to ember-data with better
+ support for sparse, immutable, and lightweight records.
 
-## Installation
-
-* `git clone` this repository
-* `npm install`
-* `bower install`
-
-## Running
-
-* `ember server`
-* Visit your app at http://localhost:4200.
-
-## Running Tests
-
-* `npm test` (Runs `ember try:testall` to test your addon against multiple Ember versions)
-* `ember test`
-* `ember test --server`
-
-## Building
-
-* `ember build`
-
-For more information on using ember-cli, visit [http://ember-cli.com/](http://ember-cli.com/).
+This project is going to attempt to closely parallel many of ember-data's
+official public APIs so that conversion between them is possible. It will
+likely never be seamless.
