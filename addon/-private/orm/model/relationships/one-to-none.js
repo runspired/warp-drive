@@ -6,7 +6,7 @@ import { singularize } from 'ember-inflector';
 
 export class OneToNone extends Relationship {
 
-  recalc() {
+  setup() {
     this.inverse = null;
     this.modelName = this.modelName || singularize(this.prop);
   }

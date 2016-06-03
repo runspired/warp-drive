@@ -4,13 +4,30 @@ export default class Relationship {
     this.options = options;
     this.prop = null;
     this.defaultValue = options.defaultValue;
-    this.modelName = modelName;
+    this.relatedModelName = modelName;
+    this.primaryModelName = null;
     this.inverse = options.inverse || null;
   }
 
-  fulfill() { throw new Error('Not Implemented'); }
+  /*
+    @method setup
 
-  recalc() { throw new Error('Not Implemented'); }
+    Called by `Schema` after setting `prop` and `primaryModelName`
+    to give the relationship a chance to autofill any information
+    that is still missing.
+   */
+  setup() { throw new Error('Not Implemented'); }
+
+  /*
+    @method fulfill
+    @prop data
+
+    Called by `Schema` when generating a new model instance
+    with the data provided for the relationship.  This method
+    should return either a `sparse-reference` (model or array)
+    or a fulfilled model / record array.
+   */
+  fulfill(/*record, data */) { throw new Error('Not Implemented'); }
 
 }
 

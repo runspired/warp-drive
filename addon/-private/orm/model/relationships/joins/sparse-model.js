@@ -16,10 +16,10 @@ class SparseModel {
     };
   }
 
-  _link(record) {
+  _link(relationship, record) {
     let { links } = this[ModelReferenceSymbol];
 
-    links.push(record);
+    links.push({ relationship, record });
   }
 
   fetch(record) {

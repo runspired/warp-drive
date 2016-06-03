@@ -20,9 +20,6 @@ export class Schema {
     this.createFromShape = false;
     this.editable = options.editable;
 
-    // injected at initialization
-    this.recordStore = null;
-
     this._create(shape, options);
   }
 
@@ -40,7 +37,7 @@ export class Schema {
       } else if (value instanceof Relationship) {
         value.prop = key;
         value.primaryModelName = options.modelName;
-        value.recalc();
+        value.setup();
 
         relationships[key] = value;
         shape[key] = undefined;
@@ -90,6 +87,7 @@ export class Schema {
       ArtificialShape.prototype[prop] = shape[prop];
     }
 
+    return ArtificialShape;
   }
 
   cloneRecord(record) {
@@ -125,7 +123,18 @@ export class Schema {
   }
 
   generateRecord(data) {
-    this._generateRecord(this._prepRecordData(data));
+    let record = this._generateRecord(this._prepRecordData(data));
+
+    this._populateRelationships(record, data);
+    return record;
+  }
+
+  _populateRelationships(record, data) {
+    for (let relKey in this.relationships) {
+      let rel = this.relationships[relKey];
+
+      record[relKey] = data[relKey] ? rel.fulfill(record, data[relKey]) : undefined;
+    }
   }
 
   _prepRecordData(data) {
@@ -136,15 +145,12 @@ export class Schema {
 
       modelData[attrKey] = data[attrKey] || getDefaultValue(attr);
     }
-
-    for (let relKey in this.relationships) {
-      let rel = this.relationships[relKey];
-
-      modelData[relKey] = data[relKey] ? rel.fulfill(data[relKey]) : undefined;
-    }
   }
 
 }
+
+// injected at boot time
+Schema.prototype.recordStore = null;
 
 function getDefaultValue(attr) {
   return attr.defaultValue ?

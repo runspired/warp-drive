@@ -1,4 +1,5 @@
 import { EDITABLE, Schema } from './schema';
+import SparseModel from './model/relationships/joins/sparse-model';
 
 export default class RecordStore {
 
@@ -14,6 +15,26 @@ export default class RecordStore {
 
   _lookupFactory(path) {
     return this.owner._lookupFactory(path);
+  }
+
+  lookupReference(modelName, id) {
+    let realized;
+    let store = this.records.get(modelName);
+
+    if (!store) {
+      this.schemaFor(modelName);
+      store = this.records.get(modelName);
+    }
+
+    realized = store.get(id);
+
+    // initialize a sparse-model to hold the place
+    if (!realized) {
+      realized = new SparseModel(id, modelName, this);
+      store.set(id, realized);
+    }
+
+    return realized;
   }
 
   schemaFor(modelName) {
