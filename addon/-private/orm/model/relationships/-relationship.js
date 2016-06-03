@@ -13,3 +13,6 @@ export default class Relationship {
   recalc() { throw new Error('Not Implemented'); }
 
 }
+
+// injected later
+Relationship.prototype.recordStore = null;
