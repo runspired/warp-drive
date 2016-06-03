@@ -91,6 +91,9 @@ export default class JSONAPIAdapter {
   }
 
   request(request, response) {
+    let start = performance.now();
+    console.log('making new ajax request at ', start);
+
     return new Promise((resolve, reject) => {
       let req = assign(
                   {},
@@ -100,6 +103,12 @@ export default class JSONAPIAdapter {
 
       request.xhr = jQuery.ajax(req);
     }).then((raw) => {
+      let end = performance.now();
+      let diff = end - start;
+
+      console.log('ajax request ended at ', end);
+      console.log('request took ' + diff + 'ms.');
+
       response.raw = raw;
     });
   }

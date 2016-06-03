@@ -2,6 +2,7 @@
 var faker = require('faker');
 var assign = require('object-assign');
 var bodyParser = require('body-parser');
+var DEFAULT_NUM_ITEMS = 40000;
 
 function between(min, max) {
   return Math.floor(Math.random() * (max + 1 - min) + min);
@@ -121,7 +122,7 @@ module.exports = function(app) {
   var itemsRouter = express.Router();
   var store = new Store(itemFactory, 'items');
 
-  for (var i = 0; i < 50; i++) {
+  for (var i = 0; i < DEFAULT_NUM_ITEMS; i++) {
     store.createRecord({});
   }
 
