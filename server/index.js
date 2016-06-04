@@ -1,4 +1,4 @@
-/*jshint node:true*/
+/* jshint node:true */
 
 // To use it create some files under `mocks/`
 // e.g. `server/mocks/ember-hamsters.js`
@@ -8,8 +8,11 @@
 //     res.send('hello');
 //   });
 // };
+var Store = require('./mocks/store/store');
 
 module.exports = function(app) {
+  app.store = new Store();
+
   var globSync   = require('glob').sync;
   var mocks      = globSync('./mocks/**/*.js', { cwd: __dirname }).map(require);
   var proxies    = globSync('./proxies/**/*.js', { cwd: __dirname }).map(require);
