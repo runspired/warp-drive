@@ -55,7 +55,7 @@ export class HasMany extends Relationship {
     }
 
     if (hasUnfetchedRecords && options.autofetch) {
-      references.fetch();
+      // references.fetch();
     }
 
     return references;

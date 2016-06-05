@@ -11,6 +11,50 @@ const {
   get
   } = Ember;
 
+class FlushTask {
+
+  constructor(size) {
+    this.work = new Array(size);
+    this._flush = this.flush();
+    this.length = 0;
+    this.maxLength = size;
+  }
+
+  push(job) {
+    let length = this.length++;
+
+    if (length > this.maxLength) {
+      this.maxLength += 20;
+      this.work.length = this.maxLength;
+    }
+
+    this.work[length] = job;
+    if (!this._flush) {
+      this._flush = this.flush();
+    }
+  }
+
+  pop() {
+    return this.work[--this.length];
+  }
+
+  flush() {
+    return Promise.resolve()
+      .then(() => {
+        let job;
+        while (job = this.pop()) {
+          job();
+        }
+        this._flush = false;
+      });
+  }
+
+}
+
+const updater = new FlushTask(100);
+
+export { updater };
+
 export class Schema {
 
   constructor(shape, options = {}) {
@@ -132,7 +176,10 @@ export class Schema {
 
     let record = this._generateRecord(preppedData);
 
-    this._populateRelationships(record, jsonApiReference);
+    // ensures we don't populate relationships until after
+    updater.push(() => {
+      this._populateRelationships(record, jsonApiReference);
+    });
     return record;
   }
 

@@ -1,10 +1,16 @@
 import URLBuilder from '../url-builder/json-api';
 import RecordArray from '../orm/record-array';
 import Pipeline from './-pipeline';
-import Syncline from './-syncline';
+import syncline from './-syncline';
 import jQuery from 'jquery';
 import Ember from 'ember';
 import { singularize } from 'ember-inflector';
+import RSVP from 'rsvp';
+import asap from './asap';
+
+RSVP.configure('async', function(callback, promise) {
+  asap(function() { callback(promise); });
+});
 
 const {
   assign
@@ -39,8 +45,8 @@ export default class Adapter {
 
   // initiate request
   pipe(...args) {
-    return new Pipeline(this, PIPELINE_HOOKS).pipe(...args);
-    // return new Syncline(this, PIPELINE_HOOKS, args).chain;
+    // return new Pipeline(this, PIPELINE_HOOKS).pipe(...args);
+    return syncline(this, PIPELINE_HOOKS, args);
   }
 
   static methodForRequest(type) {
@@ -94,7 +100,7 @@ export default class Adapter {
 
   request(request, response) {
 
-    return new Promise((resolve, reject) => {
+    return new RSVP.Promise((resolve, reject) => {
       let req = assign(
                   {},
                   request.request,
@@ -130,36 +136,27 @@ export default class Adapter {
     let serializer = this.recordStore.serializerFor(request.schema.modelName);
     let method = request.isMany ? 'normalizeMany' : 'normalizeOne';
 
+    // remove ability to do includes so we can benchmark with tons of requests
+    // response.raw.includes = undefined;
+
     response.records = serializer[method](request.schema, response.raw);
   }
 
-  _pushRecords(records) {
-    let { recordStore } = this;
-
-    for (let i = 0; i < records.length; i++) {
-      let record = records[i];
-
-      // swap for real record
-      records[i] = recordStore.pushRecord(record);
-    }
-  }
-
   pushData(request, response) {
-    let { recordStore } = this;
+    let records = [];
 
     if (request.isMany) {
-      this._pushRecords(response.records.data);
+      records = records.concat(response.records.data);
     } else {
-      response.records.data = recordStore.pushRecord(response.records.data);
+      records.push(response.records.data);
     }
 
     // load related records
     if (response.records.includes) {
-      let includes = response.records.includes;
-
-      this._pushRecords(includes);
+      records = records.concat(response.records.includes);
     }
 
+    this.recordStore.pushRecords(records);
   }
 
   pushFailed(request, response, error) {
@@ -169,10 +166,14 @@ export default class Adapter {
 
   returnData(request, response) {
     response.metrics.end = performance.now();
+    let diff = response.metrics.end - response.metrics.start;
+    let total = response.metrics.recordsTotal + response.metrics.includedTotal;
+
     console.log(`
-      Loaded ${response.metrics.recordsTotal + response.metrics.includedTotal} records
-      (${response.metrics.includedTotal} includes) in ${response.metrics.end - response.metrics.start}ms
-      (${(response.metrics.end - response.metrics.start) / (response.metrics.recordsTotal + response.metrics.includedTotal)} ms/record)
+      Loaded ${total} records
+      (${response.metrics.includedTotal} includes) in ${diff}ms
+      (${diff / total} ms/record)
+      \t ${Math.round(total / diff)} records / ms
     `);
 
     let recordOrRecordArray = response.records.data;

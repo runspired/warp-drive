@@ -20,8 +20,12 @@ SparseArray.prototype = new Array();
 SparseArray.prototype.fetch = function fetch() {
   let { modelName, parent } = this[ModelReferenceSymbol];
 
-  return parent.store.adapterFor(modelName)
+  return parent.recordStore.adapterFor(modelName)
     .findHasMany(modelName, parent, this);
+};
+
+SparseArray.prototype.unknownProperty = function unknownProperty(key) {
+  debugger;
 };
 
 export default SparseArray;

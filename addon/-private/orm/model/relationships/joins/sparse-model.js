@@ -29,6 +29,23 @@ class SparseModel {
       .findBelongsTo(modelName, id, record);
   }
 
+  unknownProperty(key) {
+    let { modelName, id } = this[ModelReferenceSymbol];
+
+    // make this work better with glimmer `if`
+    if (key === 'length' || key === 'isTruthy') {
+      return undefined;
+    }
+
+    // if the Model itself has this key
+    throw new Error(`You attempted to access '${key}' on a SparseModel for '${modelName}:id#${id}',
+      but that autofetch is set to 'false'.  You must explicitly call fetch on this relationship.`);
+
+    // else
+    // throw new Error(`You attempted to access '${key}' on a SparseModel for '${modelName}:id#${id}',
+    //   but that key does not exist on the full model.`);
+  }
+
 }
 
 export {

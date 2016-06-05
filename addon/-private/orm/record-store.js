@@ -1,4 +1,4 @@
-import { EDITABLE, Schema } from './schema';
+import { EDITABLE, Schema, updater } from './schema';
 import SparseModel from './model/relationships/joins/sparse-model';
 import { singularize } from 'ember-inflector';
 
@@ -112,7 +112,21 @@ export default class RecordStore {
       this.records.get(modelName).set(record.id, record);
     }
 
-    return record;
+    return updater.flush()
+      .then(() => { return record; });
   }
+
+  pushRecords(records) {
+    for (let i = 0; i < records.length; i++) {
+      let record = records[i];
+
+      // swap for real record
+      records[i] = this.pushRecord(record);
+    }
+
+    return updater.flush()
+      .then(() => { return records; });
+  }
+
 
 }

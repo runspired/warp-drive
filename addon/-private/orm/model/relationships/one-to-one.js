@@ -43,10 +43,6 @@ export class OneToOne extends Relationship {
 
     if (reference._isSparse) {
       reference._link(this, record);
-
-      if (this.options.autofetch) {
-        reference.fetch();
-      }
     }
 
     return reference;

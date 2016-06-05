@@ -1,9 +1,4 @@
 import RSVP from 'rsvp';
-import asap from './asap';
-
-RSVP.configure('async', function(callback, promise) {
-  asap(function() { callback(promise); });
-});
 
 function insertCatchLink(pipe, request, response, hooks, chain) {
   let [success, fail] = hooks;
@@ -37,48 +32,35 @@ function insertCatchLink(pipe, request, response, hooks, chain) {
 
 
 function walkChain(context, request, response, methods) {
-  let method = methods.shift();
   let exe;
 
-  if (context[method]) {
-    exe = context[method](request, response);
+  while (methods.length) {
+    let method = methods.shift();
 
-    if (exe && exe.then) {
-      if (methods[0] instanceof Array) {
-        exe = insertCatchLink(context, request, response, methods.shift(), exe);
+    if (context[method]) {
+      exe = context[method](request, response);
+
+      if (exe && exe.then) {
+        if (methods[0] instanceof Array) {
+          exe = insertCatchLink(context, request, response, methods.shift(), exe);
+        }
+        return exe.then(function() {
+          return walkChain(context, request, response, methods);
+        });
       }
-      return exe.then(function() {
-        return walkChain(context, request, response, methods);
-      });
     }
-  }
-
-  if (methods.length) {
-    return walkChain(context, request, response, methods);
   }
 
   return exe;
 }
 
-export default class Syncline {
+function syncline(pipe, methods, initialArgs) {
+  return RSVP.Promise.resolve()
+    .then(() => {
+      let firstStep = methods.shift();
+      let request = pipe[firstStep](...initialArgs);
+      let response = {};
 
-  constructor(pipe, methods, initialArgs) {
-    let firstStep = methods.shift();
-    let request;
-    let response = {};
-
-    let chain = RSVP.Promise.resolve()
-      .then(() => {
-        request = pipe[firstStep](...initialArgs);
-
-        return walkChain(pipe, request, response, methods);
-        })
-      .finally(() => {
-        chain = null;
-        this.chain = null;
-      });
-
-    this.chain = chain;
-  }
-
+      return walkChain(pipe, request, response, methods);
+    });
 }
