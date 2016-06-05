@@ -1,12 +1,13 @@
-function pluralize(str) {
-  return str + 's';
-}
+var pluralize = require('../utils/pluralize');
+var Factory = require('./factory');
 
-function Namespace(name, factory, serializer) {
+function Namespace(name, model, serializer) {
   this._recordMap = {};
   this._records = [];
   this._nextID = 0;
-  this._schema = factory;
+  this._schema = model;
+  this.serializer = serializer;
+  this.factory = new Factory(name, model, this.store, this);
   this._name = name;
   this._type = pluralize(name);
 }
@@ -34,7 +35,7 @@ Namespace.prototype.createRecord = function createRecord(data) {
     throw new Error(500);
   }
 
-  var values = this.normalizeOne(data);
+  var values = this.serializer.normalizeOne(data);
 
   assign(record, this._schema(), values, { id: this._nextID++ });
   this._records.push(record);
@@ -66,11 +67,37 @@ Namespace.prototype.updateRecord = function updateRecord(id, data) {
     throw new Error(500);
   }
 
-  var values = this.normalizeOne(data);
+  var values = this.serializer.normalizeOne(data);
 
   assign(record, values);
 
   return this.serializer.serializeOne(record);
+};
+
+Namespace.prototype.pushRecord = function pushRecord(record) {
+  this._recordMap[record.id] = record;
+  this._records.push(record);
+};
+
+Namespace.prototype.findReference = function findReference(id) {
+  var record = this._recordMap[id];
+
+  if (!record) {
+    record = this.seed(1, { id: id })[0];
+  }
+
+  return record;
+};
+
+Namespace.prototype.seed = function seed(number, options) {
+  options = options || {};
+  var records = [];
+
+  for (var i = 0; i < number; i++) {
+    records.push(this.factory.generate(options));
+  }
+
+  return records;
 };
 
 module.exports = Namespace;

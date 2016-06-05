@@ -37,12 +37,13 @@ export class HasMany extends Relationship {
    should return either a `sparse-reference` (model or array)
    or a fulfilled model / record array.
    */
-  fulfill(record, ids) {
+  fulfill(record, indicators) {
     let { recordStore, relatedModelName, options } = this;
     let references = new SparseArray();
     let hasUnfetchedRecords = false;
 
-    for (let id of ids) {
+    for (let i = 0; i < indicators.length; i++) {
+      let id = indicators[i].id;
       let reference = recordStore.lookupReference(relatedModelName, id);
 
       if (reference._isSparse) {

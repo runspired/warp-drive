@@ -26,7 +26,7 @@ const PIPELINE_HOOKS = [
   'returnData' // "private"
 ];
 
-export default class JSONAPIAdapter {
+export default class Adapter {
 
   constructor(props = {}) {
     this.host = props.host || '';
@@ -57,7 +57,7 @@ export default class JSONAPIAdapter {
   // request cycle
   buildRequest(requestType, schema, data, options = {}) {
     let url = options.url || (options.urlBuilder || this.urlBuilder).build(requestType, schema, data, options);
-    let method = JSONAPIAdapter.methodForRequest(requestType);
+    let method = Adapter.methodForRequest(requestType);
     let isWrite = ['PUT', 'POST'].indexOf(method) !== -1;
     let isMany = ['query', 'findAll', 'findMany', 'findHasMany'].indexOf(requestType) !== -1;
 
@@ -91,8 +91,6 @@ export default class JSONAPIAdapter {
   }
 
   request(request, response) {
-    let start = performance.now();
-    console.log('making new ajax request at ', start);
 
     return new Promise((resolve, reject) => {
       let req = assign(
@@ -103,11 +101,14 @@ export default class JSONAPIAdapter {
 
       request.xhr = jQuery.ajax(req);
     }).then((raw) => {
-      let end = performance.now();
-      let diff = end - start;
 
-      console.log('ajax request ended at ', end);
-      console.log('request took ' + diff + 'ms.');
+      response.metrics = {
+        recordsTotal: request.isMany ? raw.data.length : 1,
+        includedTotal: raw.includes ? raw.includes.length : 0,
+        start: performance.now(),
+        end: null
+      };
+
 
       response.raw = raw;
     });
@@ -151,10 +152,10 @@ export default class JSONAPIAdapter {
     }
 
     // load related records
-    if (response.records.included) {
-      let included = response.records.included;
+    if (response.records.includes) {
+      let includes = response.records.includes;
 
-      this._pushRecords(included);
+      this._pushRecords(includes);
     }
 
   }
@@ -165,6 +166,13 @@ export default class JSONAPIAdapter {
   }
 
   returnData(request, response) {
+    response.metrics.end = performance.now();
+    console.log(`
+      Loaded ${response.metrics.recordsTotal + response.metrics.includedTotal} records
+      (${response.metrics.includedTotal} includes) in ${response.metrics.end - response.metrics.start}ms
+      (${(response.metrics.end - response.metrics.start) / (response.metrics.recordsTotal + response.metrics.includedTotal)} ms/record)
+    `);
+
     let recordOrRecordArray = response.records.data;
 
     // recordOrRecordArray.meta = response.meta;
@@ -173,4 +181,4 @@ export default class JSONAPIAdapter {
 
 }
 
-JSONAPIAdapter.prototype.recordStore = null;
+Adapter.prototype.recordStore = null;

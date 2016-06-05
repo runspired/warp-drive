@@ -1,12 +1,10 @@
 var Many = require('./factory/many');
 var One = require('./factory/one');
 var Attr = require('./factory/attr');
-
-function pluralize(str) {
-  return str + 's';
-}
+var pluralize = require('../utils/pluralize');
 
 function Record(data) {
+  this.__deleted = false;
   this.relationships = {};
   this.attributes = {};
   this.id = data.id;
@@ -18,6 +16,7 @@ function Factory(name, options, store, namespace) {
   this.attributes = {};
   this._nextId = 1;
   this.type = pluralize(name);
+  this.name = name;
   this.store = store;
   this.namespace = namespace;
 
@@ -35,6 +34,8 @@ function Factory(name, options, store, namespace) {
 }
 
 Factory.prototype.generate = function generate(data) {
+  data = data || {};
+
   if (data.id && data.id < this._nextId) {
     throw new Error('Attempting to recreate an existing record!');
   } else if (data.id) {
@@ -45,6 +46,8 @@ Factory.prototype.generate = function generate(data) {
     id: data.id || this._nextId++,
     type: this.type
   });
+
+  // console.log('Generating ' + this.name + '#' + record.id, JSON.stringify(data));
 
   // eagerly push record for relationship building
   this.namespace.pushRecord(record);
@@ -67,12 +70,24 @@ Factory.prototype.generate = function generate(data) {
   for (i = 0; i < keys.length; i++) {
     key = keys[i];
     attr = this.relationships[key];
+    attr.parent = record;
+    attr.parentType = this.name;
 
-    record.relationships[key] = attr.reference(
-      data[key] !== undefined ? data[key] : attr.defaultValue()
-    );
+    var value = data[key] !== undefined ? data[key] : attr.defaultValue();
+
+    if (value) {
+/*
+      console.log(
+        '\tlinking reference: ' + this.name + '#' +
+        (attr instanceof One ? 'one(' : 'many(') + key + ') ' + value);
+*/
+      var reference = attr.reference(value);
+  //    console.log('linked:', reference.info());
+      record.relationships[key] = reference;
+    }
   }
 
+  return record;
 };
 
 module.exports = Factory;

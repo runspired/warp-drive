@@ -3,6 +3,7 @@ import Model from './model/model';
 import EditableModel from './model/editable-model';
 import Relationship from './model/relationships/-relationship';
 import Ember from 'ember';
+import { ModelReferenceSymbol } from '../orm/model/relationships/joins/sparse-model';
 
 import { EDITABLE } from './model/symbols';
 
@@ -77,13 +78,16 @@ export class Schema {
         super(schema);
         this[EDITABLE] = options.editable;
 
-        for (let attr of attrs) {
+        for (let i = 0; i < attrs.length; i++) {
+          let attr = attrs[i];
+
           this[attr] = data[attr] || shape[attr];
         }
       }
     }
 
-    for (let prop of props) {
+    for (let i = 0; i < props.length; i++) {
+      let prop = props[i];
       ArtificialShape.prototype[prop] = shape[prop];
     }
 
@@ -132,12 +136,52 @@ export class Schema {
     return record;
   }
 
+  updateRecord(record, jsonApiReference) {
+    let trueRecord;
+
+    if (record._isSparse) {
+      trueRecord = this.generateRecord(jsonApiReference);
+
+      // swap references
+      let links = record[ModelReferenceSymbol].links;
+      for (let i = 0; i < links.length; i++) {
+        let { relationship, record: parent } = links[i];
+
+        if (parent[relationship.prop] instanceof Array) {
+          let index = parent[relationship.prop].indexOf(record);
+
+          if (index !== -1) {
+            parent[relationship.prop].splice(index, 1, trueRecord);
+          }
+
+        } else {
+          parent[relationship.prop] = trueRecord;
+        }
+      }
+
+    } else {
+      // treat this new data as the true source of truth
+      trueRecord = record;
+
+      for (let attrKey in this.attributes) {
+        record[attrKey] = jsonApiReference.attributes[attrKey];
+      }
+
+      for (let relKey in this.relationships) {
+        // record[relKey] = jsonApiReference.relationships[relKey];
+      }
+
+    }
+
+    return trueRecord;
+  }
+
   _populateRelationships(record, jsonApiReference) {
     if (jsonApiReference.relationships) {
       for (let relKey in this.relationships) {
         let rel = this.relationships[relKey];
 
-        record[relKey] = jsonApiReference.relationships[relKey] ? rel.fulfill(record, jsonApiReference.relationships[relKey]) : undefined;
+        record[relKey] = jsonApiReference.relationships[relKey] ? rel.fulfill(record, jsonApiReference.relationships[relKey].data) : undefined;
       }
     }
   }

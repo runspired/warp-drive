@@ -100,6 +100,7 @@ export default class RecordStore {
   }
 
   pushRecord(jsonApiReference) {
+    // console.log('pushing reference', jsonApiReference);
     let modelName = singularize(jsonApiReference.type);
     let schema = this.schemaFor(modelName);
     let record = this.records.get(modelName).get(jsonApiReference.id);

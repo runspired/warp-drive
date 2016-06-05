@@ -44,7 +44,12 @@ export default class Model {
   unknownProperty(key) {
     let schema = this[SCHEMA];
 
-    throw new Error(`You attempted to access '${key}' on the Model for '${schema.modelName}:${this.id}',
+    // make this work better with glimmer `if`
+    if (key === 'length' || key === 'isTruthy') {
+      return undefined;
+    }
+
+    throw new Error(`You attempted to access '${key}' on the Model for '${schema.modelName}:id#${this.id}',
       but that key is undefined.  `);
   }
 

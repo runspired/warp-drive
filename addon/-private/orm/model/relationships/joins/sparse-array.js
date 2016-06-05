@@ -1,25 +1,27 @@
 import { ModelReferenceSymbol } from './sparse-model';
 
-class SparseArray extends Array {
+function SparseArray(ids, modelName, parent) {
+  var arr = [];
 
-  constructor(ids, modelName, parent) {
-    super(...ids);
+  arr.push.apply(arr, ids);
+  arr.__proto__ = SparseArray.prototype;
 
-    this._isSparse = true;
-    this[ModelReferenceSymbol] = {
-      ids,
-      modelName,
-      parent
-    };
-  }
+  arr._isSparse = true;
+  arr[ModelReferenceSymbol] = {
+    ids,
+    modelName,
+    parent
+  };
 
-  fetch() {
-    let { modelName, parent } = this[ModelReferenceSymbol];
-
-    return parent.store.adapterFor(modelName)
-      .findHasMany(modelName, parent, this);
-  }
-
+  return arr;
 }
+SparseArray.prototype = new Array();
+
+SparseArray.prototype.fetch = function fetch() {
+  let { modelName, parent } = this[ModelReferenceSymbol];
+
+  return parent.store.adapterFor(modelName)
+    .findHasMany(modelName, parent, this);
+};
 
 export default SparseArray;

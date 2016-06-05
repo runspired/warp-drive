@@ -1,7 +1,23 @@
 <h1>Welcome!</h1>
 <ul>
+  {{!--
   {{#each model as |item|}}
-    <li>{{item.title}}</li>
+    <li>
+      <h3>{{unbound item.name}}</h3>
+      <p>
+        {{unbound item.description}}
+      </p>
+      {{#if item.baz}}
+        <h6>Baz: {{item.baz.name}}</h6>
+      {{/if}}
+      <h4>Foos</h4>
+      <ul>
+        {{#each item.foos as |foo|}}
+          <li>{{foo.name}}</li>
+        {{/each}}
+      </ul>
+    </li>
   {{/each}}
+  --}}
 </ul>
 {{outlet}}

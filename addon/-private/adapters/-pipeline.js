@@ -1,4 +1,9 @@
 import RSVP from 'rsvp';
+import asap from './asap';
+
+RSVP.configure('async', function(callback, promise) {
+  asap(function() { callback(promise); });
+});
 
 
 export default class Pipeline {
@@ -14,7 +19,9 @@ export default class Pipeline {
               .then((args) => { return pipe[firstStep](...args); })
               .then((req) => { request = req; });
 
-    for (let method of methods) {
+    for (let i = 0; i < methods.length; i++) {
+      let method = methods[i];
+
       if (method instanceof Array) {
         let [success, fail] = method;
 

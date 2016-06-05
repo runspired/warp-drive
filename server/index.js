@@ -8,20 +8,22 @@
 //     res.send('hello');
 //   });
 // };
-var Store = require('./mocks/store/store');
+var Store = require('./db/store/store');
+var path = require('path');
+var route = require('./db/generate-route');
 
-module.exports = function(app) {
-  app.store = new Store();
+module.exports = function(app, project) {
+  var configPath = path.join(project.project.root, project.project.configPath());
+  var config = require(configPath)(project.environment).mockServer || {};
 
-  var globSync   = require('glob').sync;
-  var mocks      = globSync('./mocks/**/*.js', { cwd: __dirname }).map(require);
-  var proxies    = globSync('./proxies/**/*.js', { cwd: __dirname }).map(require);
+  app.store = new Store(config);
 
   // Log proxy requests
   var morgan  = require('morgan');
   app.use(morgan('dev'));
 
-  mocks.forEach(function(route) { route(app); });
-  proxies.forEach(function(route) { route(app); });
+  app.store.namespaces.forEach(function(name) {
+    route(app, name);
+  });
 
 };

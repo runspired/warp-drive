@@ -1,11 +1,12 @@
-class RecordArray extends Array {
+function RecordArray(meta, ...args) {
+  var arr = [];
 
-  constructor(meta, ...args) {
-    super(...args);
+  arr.push.apply(arr, ...args);
+  arr.__proto__ = RecordArray.prototype;
+  arr.meta = meta;
 
-    this.meta = meta;
-  }
-
+  return arr;
 }
+RecordArray.prototype = new Array();
 
 export default RecordArray;
