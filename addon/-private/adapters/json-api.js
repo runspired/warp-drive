@@ -1,6 +1,7 @@
 import URLBuilder from '../url-builder/json-api';
 import RecordArray from '../orm/record-array';
 import Pipeline from './-pipeline';
+import Syncline from './-syncline';
 import jQuery from 'jquery';
 import Ember from 'ember';
 import { singularize } from 'ember-inflector';
@@ -39,6 +40,7 @@ export default class Adapter {
   // initiate request
   pipe(...args) {
     return new Pipeline(this, PIPELINE_HOOKS).pipe(...args);
+    // return new Syncline(this, PIPELINE_HOOKS, args).chain;
   }
 
   static methodForRequest(type) {

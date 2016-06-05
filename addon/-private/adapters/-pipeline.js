@@ -15,9 +15,7 @@ export default class Pipeline {
     let request;
     let response = {};
 
-    chain = chain
-              .then((args) => { return pipe[firstStep](...args); })
-              .then((req) => { request = req; });
+    chain = chain.then((args) => { request = pipe[firstStep](...args); });
 
     for (let i = 0; i < methods.length; i++) {
       let method = methods[i];
