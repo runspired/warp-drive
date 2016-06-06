@@ -39,14 +39,14 @@ export class BelongsTo extends Relationship {
    should return either a `sparse-reference` (model or array)
    or a fulfilled model / record array.
    */
-  fulfill(record, id) {
-    let reference = this.recordStore.lookupReference(this.relatedModelName, id);
+  fulfill(record, indicator) {
+    let reference = this.recordStore.lookupReference(this.relatedModelName, indicator.id);
 
     if (reference._isSparse) {
       reference._link(this, record);
 
       if (this.options.autofetch) {
-        reference.fetch();
+      //  reference.fetch();
       }
     }
 

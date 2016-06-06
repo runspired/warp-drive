@@ -30,22 +30,22 @@ function insertCatchLink(pipe, request, response, hooks, chain) {
   return chain;
 }
 
-// TODO increment instead of shift
-function walkChain(context, request, response, methods) {
+
+function walkChain(context, request, response, methods, iter = 0) {
   let exe;
 
-  while (methods.length) {
-    let method = methods.shift();
+  while (iter < methods.length) {
+    let method = methods[iter++];
 
     if (context[method]) {
       exe = context[method](request, response);
 
       if (exe && exe.then) {
-        if (methods[0] instanceof Array) {
-          exe = insertCatchLink(context, request, response, methods.shift(), exe);
+        if (methods[iter] instanceof Array) {
+          exe = insertCatchLink(context, request, response, methods[iter++], exe);
         }
-        return exe.then(function() {
-          return walkChain(context, request, response, methods);
+        return exe.then(function () {
+          return walkChain(context, request, response, methods, iter);
         });
       }
     }

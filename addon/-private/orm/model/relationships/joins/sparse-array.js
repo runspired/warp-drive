@@ -25,7 +25,7 @@ SparseArray.prototype.fetch = function fetch() {
 };
 
 SparseArray.prototype.unknownProperty = function unknownProperty(key) {
-  debugger;
+  // debugger;
 };
 
 export default SparseArray;

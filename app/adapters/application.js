@@ -1,1 +1,1 @@
-export { default } from 'ember-orm/-private/adapters/json-api';
+export { default } from 'ember-orm/-private/adapters/adapter';

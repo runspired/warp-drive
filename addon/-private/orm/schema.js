@@ -122,6 +122,7 @@ export class Schema {
         super(schema);
         this[EDITABLE] = options.editable;
 
+        this.id = data.id;
         for (let i = 0; i < attrs.length; i++) {
           let attr = attrs[i];
 
@@ -170,27 +171,38 @@ export class Schema {
     }
   }
 
-  generateRecord(jsonApiReference) {
+  generateRecord(jsonApiReference, flushRelationships) {
     let preppedData = this._prepRecordData(jsonApiReference);
     preppedData.id = jsonApiReference.id;
 
     let record = this._generateRecord(preppedData);
 
     // ensures we don't populate relationships until after
-    //updater.push(() => {
-      this._populateRelationships(record, jsonApiReference);
-    //});
+    if (jsonApiReference.relationships) {
+      if (flushRelationships) {
+        this._populateRelationships(record, jsonApiReference);
+      } else {
+        updater.push(() => {
+          this._populateRelationships(record, jsonApiReference);
+        });
+      }
+    }
+
     return record;
   }
 
-  updateRecord(record, jsonApiReference) {
+
+
+  updateRecord(record, jsonApiReference, flushRelationships) {
     let trueRecord;
 
     if (record._isSparse) {
-      trueRecord = this.generateRecord(jsonApiReference);
+      console.log('splicing out sparse record');
+      trueRecord = this.generateRecord(jsonApiReference, flushRelationships);
 
       // swap references
       let links = record[ModelReferenceSymbol].links;
+
       for (let i = 0; i < links.length; i++) {
         let { relationship, record: parent } = links[i];
 
@@ -215,7 +227,9 @@ export class Schema {
       }
 
       for (let relKey in this.relationships) {
-        // record[relKey] = jsonApiReference.relationships[relKey];
+        let info = jsonApiReference.relationships[relKey];
+        // debugger;
+        record[relKey];
       }
 
     }
@@ -223,15 +237,21 @@ export class Schema {
     return trueRecord;
   }
 
-  _populateRelationships(record, jsonApiReference) {
-    if (jsonApiReference.relationships) {
-      for (let relKey in this.relationships) {
-        let rel = this.relationships[relKey];
 
-        record[relKey] = jsonApiReference.relationships[relKey] ? rel.fulfill(record, jsonApiReference.relationships[relKey].data) : undefined;
-      }
+
+  _populateRelationships(record, jsonApiReference) {
+    let keys = Object.keys(this.relationships);
+
+    for (let i = 0; i < keys.length; i++) {
+      let relKey = keys[i];
+      let rel = this.relationships[relKey];
+
+      record[relKey] = jsonApiReference.relationships[relKey] ?
+        rel.fulfill(record, jsonApiReference.relationships[relKey].data) : undefined;
     }
   }
+
+
 
   _prepRecordData(jsonApiReference) {
     let modelData = {};

@@ -6,7 +6,7 @@ import jQuery from 'jquery';
 import Ember from 'ember';
 import { singularize } from 'ember-inflector';
 import RSVP from 'rsvp';
-import asap from './asap';
+import asap from './../ember-internals/asap';
 
 RSVP.configure('async', function(callback, promise) {
   asap(function() { callback(promise); });
@@ -143,20 +143,7 @@ export default class Adapter {
   }
 
   pushData(request, response) {
-    let records = [];
-
-    if (request.isMany) {
-      records = records.concat(response.records.data);
-    } else {
-      records.push(response.records.data);
-    }
-
-    // load related records
-    if (response.records.includes) {
-      records = records.concat(response.records.includes);
-    }
-
-    this.recordStore.pushRecords(records);
+    return this.recordStore.pushRecords(response.records);
   }
 
   pushFailed(request, response, error) {

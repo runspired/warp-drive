@@ -5,13 +5,10 @@ const {
   get
   } = Ember;
 
-let ORM_ID = 0;
-
 export default class Model {
 
   constructor(schema) {
-    this.id = ORM_ID++;
-    this[ORM_REF] = this.id;
+    this.id = 0;
     this[SCHEMA] = schema;
     this[EDITABLE] = false;
   }

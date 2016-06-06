@@ -1,15 +1,18 @@
 import { EDITABLE, Schema, updater } from './schema';
 import SparseModel from './model/relationships/joins/sparse-model';
 import { singularize } from 'ember-inflector';
+import EmptyObject from '../ember-internals/empty-object';
 
 export default class RecordStore {
 
   constructor(owner) {
     this.owner = owner;
-    this.schemas = new Map();
-    this.records = new Map();
-    this.adapters = new Map();
-    this.serializers = new Map();
+    this.schemas = new EmptyObject();
+    this.records = new EmptyObject();
+    this.adapters = new EmptyObject();
+    this.serializers = new EmptyObject();
+
+    window.recordStore = this;
   }
 
   _lookup(path) {
@@ -22,41 +25,41 @@ export default class RecordStore {
 
   lookupReference(modelName, id) {
     let realized;
-    let store = this.records.get(modelName);
+    let store = this.records[modelName];
 
     if (!store) {
       this.schemaFor(modelName);
-      store = this.records.get(modelName);
+      store = this.records[modelName];
     }
 
-    realized = store.get(id);
+    realized = store[id];
 
     // initialize a sparse-model to hold the place
     if (!realized) {
       realized = new SparseModel(id, modelName, this);
-      store.set(id, realized);
+      store[id] = realized;
     }
 
     return realized;
   }
 
   schemaFor(modelName) {
-    let schema = this.schemas.get(modelName);
+    let schema = this.schemas[modelName];
 
     if (!schema) {
       let shape = this._lookupFactory(`model:${modelName}`);
 
       schema = new Schema(shape, { modelName, editable: shape[EDITABLE] });
 
-      this.schemas.set(modelName, schema);
-      this.records.set(modelName, new Map());
+      this.schemas[modelName] = schema;
+      this.records[modelName] = new EmptyObject();
     }
 
     return schema;
   }
 
   adapterFor(modelName) {
-    let adapter = this.adapters.get(modelName);
+    let adapter = this.adapters[modelName];
 
     if (!adapter) {
       let Adapter = this._lookupFactory(`adapter:${modelName}`);
@@ -71,14 +74,14 @@ export default class RecordStore {
       adapter = new Adapter();
       adapter.recordStore = this;
 
-      this.adapters.set(modelName, adapter);
+      this.adapters[modelName] = adapter;
     }
 
     return adapter;
   }
 
   serializerFor(modelName) {
-    let serializer = this.serializers.get(modelName);
+    let serializer = this.serializers[modelName];
 
     if (!serializer) {
       let Serializer = this._lookupFactory(`serializer:${modelName}`);
@@ -93,41 +96,59 @@ export default class RecordStore {
       serializer = new Serializer();
       serializer.recordStore = this;
 
-      this.serializers.set(modelName, serializer);
+      this.serializers[modelName] = serializer;
     }
 
     return serializer;
   }
 
-  pushRecord(jsonApiReference) {
-    // console.log('pushing reference', jsonApiReference);
+  _pushRecord(jsonApiReference, flushRelationships = false) {
     let modelName = singularize(jsonApiReference.type);
     let schema = this.schemaFor(modelName);
-    let record = this.records.get(modelName).get(jsonApiReference.id);
+    let record = this.records[modelName][jsonApiReference.id];
 
     if (record) {
-      schema.updateRecord(record, jsonApiReference);
+      if (record._isSparse) {
+        record = this.records[modelName][jsonApiReference.id] = schema.updateRecord(record, jsonApiReference, flushRelationships);
+      } else {
+        schema.updateRecord(record, jsonApiReference, flushRelationships);
+      }
+
     } else {
-      record = schema.generateRecord(jsonApiReference);
-      this.records.get(modelName).set(record.id, record);
+      record = schema.generateRecord(jsonApiReference, flushRelationships);
+      this.records[modelName][record.id] = record;
     }
 
-    // return updater.flush()
-    //  .then(() => { return record; });
     return record;
   }
 
-  pushRecords(records) {
-    for (let i = 0; i < records.length; i++) {
-      let record = records[i];
+  pushRecord(jsonApiReference) {
+    let record = this._pushRecord(jsonApiReference);
 
-      // swap for real record
-      records[i] = this.pushRecord(record);
+    return updater.flush()
+      .then(() => { return record; });
+  }
+
+  pushRecords(records) {
+
+    // loading related records first is much faster :troll:
+    if (records.includes) {
+      for (let i = 0; i < records.includes.length; i++) {
+        this._pushRecord(records.includes[i], false);
+      }
     }
 
-    // return updater.flush()
-    //  .then(() => { return records; });
-    return records;
+    if (records.data instanceof Array) {
+      for (let i = 0; i < records.data.length; i++) {
+        // swap for real record
+        records.data[i] = this._pushRecord(records.data[i], true);
+      }
+    } else {
+      records.data = this._pushRecord(records.data, true);
+    }
+
+    return updater.flush()
+      .then(() => { return records.data; });
   }
 
 

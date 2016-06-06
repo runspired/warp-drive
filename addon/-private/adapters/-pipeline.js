@@ -1,5 +1,5 @@
 import RSVP from 'rsvp';
-import asap from './asap';
+import asap from '../ember-internals/asap';
 
 RSVP.configure('async', function(callback, promise) {
   asap(function() { callback(promise); });
@@ -11,13 +11,13 @@ export default class Pipeline {
   constructor(pipe, methods) {
     let deferred = RSVP.defer();
     let chain = deferred.promise;
-    let firstStep = methods.shift();
+    let firstStep = methods[0];
     let request;
     let response = {};
 
     chain = chain.then((args) => { request = pipe[firstStep](...args); });
 
-    for (let i = 0; i < methods.length; i++) {
+    for (let i = 1; i < methods.length; i++) {
       let method = methods[i];
 
       if (method instanceof Array) {

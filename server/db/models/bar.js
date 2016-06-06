@@ -8,6 +8,6 @@ var between = require('../utils/between');
 module.exports = {
   name: attr('string', { defaultValue: function() { return faker.lorem.words(between(3, 7)); }}),
   description: attr('string', { defaultValue: function() { return faker.lorem.sentences(between(3, 7)); }}),
-  baz: one('baz', { inverse: 'bar', defaultValue: faker.random.boolean }),
-  foos: many('foo', { inverse: 'bar', defaultValue: between(3, 5) })
+  baz: one('baz', { inverse: 'bar', defaultValue: true }),
+  foos: many('foo', { inverse: 'bar', defaultValue: 4 })
 };
