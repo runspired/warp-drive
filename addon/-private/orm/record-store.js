@@ -112,8 +112,9 @@ export default class RecordStore {
       this.records.get(modelName).set(record.id, record);
     }
 
-    return updater.flush()
-      .then(() => { return record; });
+    // return updater.flush()
+    //  .then(() => { return record; });
+    return record;
   }
 
   pushRecords(records) {
@@ -124,8 +125,9 @@ export default class RecordStore {
       records[i] = this.pushRecord(record);
     }
 
-    return updater.flush()
-      .then(() => { return records; });
+    // return updater.flush()
+    //  .then(() => { return records; });
+    return records;
   }
 
 

@@ -30,7 +30,7 @@ function insertCatchLink(pipe, request, response, hooks, chain) {
   return chain;
 }
 
-
+// TODO increment instead of shift
 function walkChain(context, request, response, methods) {
   let exe;
 
@@ -54,7 +54,7 @@ function walkChain(context, request, response, methods) {
   return exe;
 }
 
-function syncline(pipe, methods, initialArgs) {
+export default function syncline(pipe, methods, initialArgs) {
   return RSVP.Promise.resolve()
     .then(() => {
       let firstStep = methods.shift();

@@ -24,7 +24,7 @@ class FlushTask {
     let length = this.length++;
 
     if (length > this.maxLength) {
-      this.maxLength += 20;
+      this.maxLength *= 2;
       this.work.length = this.maxLength;
     }
 
@@ -51,7 +51,7 @@ class FlushTask {
 
 }
 
-const updater = new FlushTask(100);
+const updater = new FlushTask(500);
 
 export { updater };
 
@@ -177,9 +177,9 @@ export class Schema {
     let record = this._generateRecord(preppedData);
 
     // ensures we don't populate relationships until after
-    updater.push(() => {
+    //updater.push(() => {
       this._populateRelationships(record, jsonApiReference);
-    });
+    //});
     return record;
   }
 
