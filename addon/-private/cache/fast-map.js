@@ -76,7 +76,6 @@ export default class FastMap {
 
     this._keys[index] = key;
     this._values[index] = value;
-    return this;
   }
 
   delete(key) {

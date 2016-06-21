@@ -46,12 +46,12 @@ export default class RecordStore {
   }
 
   static _setStoreRecord(store, id, value) {
-    store[id] = value;
+    store.set(id, value);
     return value;
   }
 
   static _getStoreRecord(store, id) {
-    return store[id];
+    return store.get(id);
   }
 
   _lookup(path) {
@@ -91,7 +91,7 @@ export default class RecordStore {
       schema = new Schema(shape, { modelName, editable: shape[EDITABLE] });
 
       this.schemas[modelName] = schema;
-      this.records[modelName] = new EmptyObject();
+      this.records[modelName] = new HashMap();
       this.meta[modelName] = new EmptyObject();
       this.meta[modelName].recordsPushed = 0;
       this.meta[modelName].hasYielded = false;
