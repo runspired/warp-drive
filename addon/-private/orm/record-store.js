@@ -37,6 +37,22 @@ export default class RecordStore {
     this.meta = new EmptyObject();
   }
 
+  _setRecord(type, id, value) {
+    this.records[type][id] = value;
+  }
+
+  _getRecord(type, id) {
+    return this.records[type][id];
+  }
+
+  static _setStoreRecord(store, id, value) {
+    store[id] = value;
+  }
+
+  static _getStoreRecord(store, id) {
+    return store[id];
+  }
+
   _lookup(path) {
     return this.owner.lookup(path);
   }
@@ -54,12 +70,12 @@ export default class RecordStore {
       store = this.records[modelName];
     }
 
-    realized = store[id];
+    realized = RecordStore._getStoreRecord(store, id);
 
     // initialize a sparse-model to hold the place
     if (!realized) {
       realized = new SparseModel(id, modelName, this);
-      store[id] = realized;
+      RecordStore._setStoreRecord(store, id, realized);
     }
 
     return realized;
@@ -132,18 +148,18 @@ export default class RecordStore {
     let schema = this.schemaFor(modelName);
     let store = this.records[modelName];
 
-    return this.__pushOneOfModel(doc,  store, schema);
+    return RecordStore.__pushOneOfModel(doc,  store, schema);
   }
 
-  __pushOneOfModel(doc, store, schema) {
-    let record = store[doc.id];
+  static __pushOneOfModel(doc, store, schema) {
+    let record = RecordStore._getStoreRecord(store, doc.id);
 
     if (record) {
-      return store[doc.id] = schema.updateRecord(record, doc);
+      return RecordStore._setStoreRecord(store, doc.id, schema.updateRecord(record, doc));
     }
 
     record = schema.generateRecord(doc);
-    store[record.id] = record;
+    RecordStore._setStoreRecord(store, record.id, record);
 
     return record;
   }
@@ -217,11 +233,11 @@ export default class RecordStore {
     if (pushed < CHROME_PREHEAT_NUMBER) {
       for (iter; iter < CHROME_PREHEAT_NUMBER && iter < length; iter++) {
         meta.recordsPushed++;
-        result[iter] = this.__pushOneOfModel(data[iter], store, schema);
+        result[iter] = RecordStore.__pushOneOfModel(data[iter], store, schema);
       }
     } else if (yielded) {
       for (iter; iter < length; iter++) {
-        result[iter] = this.__pushOneOfModel(data[iter], store, schema);
+        result[iter] = RecordStore.__pushOneOfModel(data[iter], store, schema);
       }
     }
 
@@ -229,7 +245,7 @@ export default class RecordStore {
     if (iter < length) {
       return yieldThen(() => {
         for (iter; iter < length; iter++) {
-          result[iter] = this.__pushOneOfModel(data[iter], store, schema);
+          result[iter] = RecordStore.__pushOneOfModel(data[iter], store, schema);
         }
 
         meta.hasYielded = true;
