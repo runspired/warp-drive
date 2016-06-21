@@ -38,15 +38,16 @@ export default class RecordStore {
   }
 
   _setRecord(type, id, value) {
-    this.records[type][id] = value;
+    return RecordStore._setStoreRecord(this.records[type], id, value);
   }
 
   _getRecord(type, id) {
-    return this.records[type][id];
+    return RecordStore._getStoreRecord(this.records[type], id);
   }
 
   static _setStoreRecord(store, id, value) {
     store[id] = value;
+    return value;
   }
 
   static _getStoreRecord(store, id) {
