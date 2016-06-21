@@ -9,8 +9,8 @@ import updater from './updater';
 import instrument from './instrument';
 import { measure } from './instrument';
 
-const CHROME_PREHEAT_NUMBER = 3;
-const CHROME_PREHEAT_TIME = 0;
+export const CHROME_PREHEAT_NUMBER = 3;
+export const CHROME_PREHEAT_TIME = 2;
 let nextYield;
 
 function newYield() {

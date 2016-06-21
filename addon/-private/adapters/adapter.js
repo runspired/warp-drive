@@ -8,6 +8,8 @@ import { singularize } from 'ember-inflector';
 import RSVP from 'rsvp';
 import asap from './../ember/asap';
 
+import { CHROME_PREHEAT_TIME } from '../orm/record-store';
+
 RSVP.configure('async', function(callback, promise) {
   asap(function() { callback(promise); });
 });
@@ -15,6 +17,8 @@ RSVP.configure('async', function(callback, promise) {
 const {
   assign
   } = Ember;
+
+let isFirstRun = true;
 
 const PIPELINE_HOOKS = [
   'buildRequest',
@@ -168,6 +172,13 @@ export default class Adapter {
     let preTime = response.metrics.normalizeStart - response.metrics.start;
     let normToPush = response.metrics.pushStart - response.metrics.normalizeEnd;
     let pushToEnd = response.metrics.end - response.metrics.pushEnd;
+
+    if (isFirstRun) {
+      diff -= CHROME_PREHEAT_TIME;
+      pushTime -= CHROME_PREHEAT_TIME;
+      isFirstRun = false;
+    }
+
     // console.log(response.metrics);
 
     console.log(`
