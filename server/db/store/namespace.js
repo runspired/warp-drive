@@ -50,6 +50,19 @@ Namespace.prototype.findAll = function findAll() {
   }));
 };
 
+Namespace.prototype.query = function query(query) {
+  var records = this._records.filter(function(record) {
+    return !record.__deleted;
+  });
+
+  var page = parseInt(query.page, 10);
+  var limit = parseInt(query.limit, 10);
+  var startingIndex = page * limit;
+  var results = records.slice(startingIndex, startingIndex + limit);
+
+  return this.serializer.serializeMany(results);
+};
+
 Namespace.prototype.deleteRecord = function deleteRecord(id) {
   var record = this._recordMap[id];
 

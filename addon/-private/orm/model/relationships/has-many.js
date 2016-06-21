@@ -1,6 +1,7 @@
 import Relationship from './-relationship';
 import { singularize } from 'ember-inflector';
 import SparseArray from './joins/sparse-array';
+import { measure } from '../../instrument';
 
 export class HasMany extends Relationship {
 
@@ -39,24 +40,29 @@ export class HasMany extends Relationship {
    */
   fulfill(record, indicators) {
     let { recordStore, relatedModelName, options } = this;
-    let references = new SparseArray();
+    let references = new SparseArray(indicators.length);
     let hasUnfetchedRecords = false;
 
     for (let i = 0; i < indicators.length; i++) {
       let id = indicators[i].id;
+
+      // measure('lookupReference-many');
       let reference = recordStore.lookupReference(relatedModelName, id);
+      // measure('lookupReference-many');
 
       if (reference._isSparse) {
         hasUnfetchedRecords = true;
         reference._link(this, record);
       }
 
-      references.push(reference);
+      references[i] = reference;
     }
 
+    /*
     if (hasUnfetchedRecords && options.autofetch) {
       // references.fetch();
     }
+    */
 
     return references;
   }

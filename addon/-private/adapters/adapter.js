@@ -6,7 +6,7 @@ import jQuery from 'jquery';
 import Ember from 'ember';
 import { singularize } from 'ember-inflector';
 import RSVP from 'rsvp';
-import asap from './../ember-internals/asap';
+import asap from './../ember/asap';
 
 RSVP.configure('async', function(callback, promise) {
   asap(function() { callback(promise); });
@@ -133,6 +133,7 @@ export default class Adapter {
   }
 
   normalize(request, response) {
+    response.metrics.normalizeStart = performance.now();
     let serializer = this.recordStore.serializerFor(request.schema.modelName);
     let method = request.isMany ? 'normalizeMany' : 'normalizeOne';
 
@@ -140,10 +141,16 @@ export default class Adapter {
     // response.raw.includes = undefined;
 
     response.records = serializer[method](request.schema, response.raw);
+    response.metrics.normalizeEnd = performance.now();
   }
 
   pushData(request, response) {
-    return this.recordStore.pushRecords(response.records);
+    response.metrics.pushStart = performance.now();
+    return this.recordStore.pushRecords(response.records)
+      .then((result) => {
+        response.metrics.pushEnd = performance.now();
+        return result;
+      });
   }
 
   pushFailed(request, response, error) {
@@ -155,12 +162,25 @@ export default class Adapter {
     response.metrics.end = performance.now();
     let diff = response.metrics.end - response.metrics.start;
     let total = response.metrics.recordsTotal + response.metrics.includedTotal;
+    let normalizeTime = response.metrics.normalizeEnd - response.metrics.normalizeStart;
+    let pushTime = response.metrics.pushEnd - response.metrics.pushStart;
+    let synclineTime = diff - normalizeTime - pushTime;
+    let preTime = response.metrics.normalizeStart - response.metrics.start;
+    let normToPush = response.metrics.pushStart - response.metrics.normalizeEnd;
+    let pushToEnd = response.metrics.end - response.metrics.pushEnd;
+    // console.log(response.metrics);
 
     console.log(`
       Loaded ${total} records
-      (${response.metrics.includedTotal} includes) in ${diff}ms
-      (${diff / total} ms/record)
-      \t ${Math.round(total / diff)} records / ms
+      (${response.metrics.includedTotal} includes) in ${diff.toFixed(3)}ms
+      \t (${(diff / total).toFixed(6)} ms/record)
+      ${Math.round(total / diff)} records / ms
+      \t Syncline: ${synclineTime.toFixed(3)}ms
+      \t\t pre-normalize: ${preTime.toFixed(3)}ms
+      \t\t norm-to-push: ${normToPush.toFixed(3)}ms
+      \t\t push-to-end: ${pushToEnd.toFixed(3)}ms
+      \t Normalize: ${normalizeTime.toFixed(3)}ms \t ${Math.round(total / normalizeTime)} records / ms
+      \t Push: ${pushTime.toFixed(3)}ms \t ${Math.round(total / pushTime)} records / ms
     `);
 
     let recordOrRecordArray = response.records.data;

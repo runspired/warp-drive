@@ -1,12 +1,17 @@
 import { ModelReferenceSymbol } from './sparse-model';
 
 function SparseArray(ids, modelName, parent) {
-  var arr = [];
+  let arr;
+  if (typeof ids === 'number') {
+    arr = new Array(ids);
+  } else if (ids instanceof Array) {
+    arr = ids.slice();
+  } else {
+    arr = [];
+  }
 
-  arr.push.apply(arr, ids);
   arr.__proto__ = SparseArray.prototype;
 
-  arr._isSparse = true;
   arr[ModelReferenceSymbol] = {
     ids,
     modelName,
@@ -15,7 +20,9 @@ function SparseArray(ids, modelName, parent) {
 
   return arr;
 }
+
 SparseArray.prototype = new Array();
+SparseArray.prototype._isSparse = true;
 
 SparseArray.prototype.fetch = function fetch() {
   let { modelName, parent } = this[ModelReferenceSymbol];
@@ -29,3 +36,5 @@ SparseArray.prototype.unknownProperty = function unknownProperty(key) {
 };
 
 export default SparseArray;
+
+window.SparseArray = SparseArray;

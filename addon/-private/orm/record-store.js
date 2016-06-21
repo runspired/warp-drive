@@ -1,7 +1,30 @@
-import { EDITABLE, Schema, updater } from './schema';
+import { EDITABLE, Schema } from './schema';
 import SparseModel from './model/relationships/joins/sparse-model';
 import { singularize } from 'ember-inflector';
-import EmptyObject from '../ember-internals/empty-object';
+import HashMap from '../cache/hash-map';
+import FastMap from '../cache/fast-map';
+import EmptyObject from '../ember/empty-object';
+import Ember from 'ember';
+import updater from './updater';
+import instrument from './instrument';
+import { measure } from './instrument';
+
+const CHROME_PREHEAT_NUMBER = 3;
+const CHROME_PREHEAT_TIME = 0;
+let nextYield;
+
+function newYield() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, CHROME_PREHEAT_TIME);
+  }).then(() => { nextYield = undefined; })
+}
+
+function yieldThen(cb) {
+  nextYield = nextYield || newYield();
+
+  return nextYield
+    .then(cb);
+}
 
 export default class RecordStore {
 
@@ -11,8 +34,7 @@ export default class RecordStore {
     this.records = new EmptyObject();
     this.adapters = new EmptyObject();
     this.serializers = new EmptyObject();
-
-    window.recordStore = this;
+    this.meta = new EmptyObject();
   }
 
   _lookup(path) {
@@ -53,6 +75,9 @@ export default class RecordStore {
 
       this.schemas[modelName] = schema;
       this.records[modelName] = new EmptyObject();
+      this.meta[modelName] = new EmptyObject();
+      this.meta[modelName].recordsPushed = 0;
+      this.meta[modelName].hasYielded = false;
     }
 
     return schema;
@@ -102,53 +127,191 @@ export default class RecordStore {
     return serializer;
   }
 
-  _pushRecord(jsonApiReference, flushRelationships = false) {
-    let modelName = singularize(jsonApiReference.type);
+  _pushRecord(doc) {
+    let modelName = singularize(doc.type);
     let schema = this.schemaFor(modelName);
-    let record = this.records[modelName][jsonApiReference.id];
+    let store = this.records[modelName];
+
+    return this.__pushOneOfModel(doc,  store, schema);
+  }
+
+  __pushOneOfModel(doc, store, schema) {
+    let record = store[doc.id];
 
     if (record) {
-      if (record._isSparse) {
-        record = this.records[modelName][jsonApiReference.id] = schema.updateRecord(record, jsonApiReference, flushRelationships);
-      } else {
-        schema.updateRecord(record, jsonApiReference, flushRelationships);
-      }
-
-    } else {
-      record = schema.generateRecord(jsonApiReference, flushRelationships);
-      this.records[modelName][record.id] = record;
+      return store[doc.id] = schema.updateRecord(record, doc);
     }
+
+    record = schema.generateRecord(doc);
+    store[record.id] = record;
 
     return record;
   }
 
-  pushRecord(jsonApiReference) {
-    let record = this._pushRecord(jsonApiReference);
+  pushRecord(doc) {
+    let maybeRecord = this._pushRecord(doc);
+
+    if (typeof maybeRecord.then === 'function') {
+      return maybeRecord
+        .then((record) => {
+          return updater.flush()
+            .then(() => { return record; });
+        });
+    }
 
     return updater.flush()
-      .then(() => { return record; });
+      .then(() => { return maybeRecord; });
   }
 
-  pushRecords(records) {
+  _pushMany(records) {
+    if (records) {
+      let types = new EmptyObject();
+      let keys = [];
 
-    // loading related records first is much faster :troll:
-    if (records.includes) {
-      for (let i = 0; i < records.includes.length; i++) {
-        this._pushRecord(records.includes[i], false);
+      for (let i = 0; i < records.length; i++) {
+        let record = records[i];
+        if (!types[record.type]) {
+          types[record.type] = [];
+          keys.push(record.type);
+        }
+        types[record.type].push(record);
+      }
+
+      let promises = new Array(keys.length);
+
+      for (let i = 0; i < keys.length; i++) {
+        promises[i] = this.__pushManyOfModel(types[keys[i]]);
+      }
+
+      return Promise.all(promises).then((results) => {
+        let result = [];
+
+        for (let i = 0; i < results.length; i++) {
+          result = result.concat(results[i]);
+        }
+
+        return result;
+      });
+    }
+
+    return Promise.resolve();
+  }
+
+  __pushManyOfModel(data) {
+    let ref = data[0];
+
+    if (!ref) {
+      return Promise.resolve([]);
+    }
+
+    let modelName = singularize(ref.type);
+    let schema = this.schemaFor(modelName);
+    let store = this.records[modelName];
+    let length = data.length;
+    let result = new Array(length);
+    let meta = this.meta[modelName];
+    let pushed = meta.recordsPushed;
+    let yielded = meta.hasYielded;
+    let iter = 0;
+
+    if (pushed < CHROME_PREHEAT_NUMBER) {
+      for (iter; iter < CHROME_PREHEAT_NUMBER && iter < length; iter++) {
+        meta.recordsPushed++;
+        result[iter] = this.__pushOneOfModel(data[iter], store, schema);
+      }
+    } else if (yielded) {
+      for (iter; iter < length; iter++) {
+        result[iter] = this.__pushOneOfModel(data[iter], store, schema);
       }
     }
 
-    if (records.data instanceof Array) {
-      for (let i = 0; i < records.data.length; i++) {
-        // swap for real record
-        records.data[i] = this._pushRecord(records.data[i], true);
-      }
+    // deal with any remaining records
+    if (iter < length) {
+      return yieldThen(() => {
+        for (iter; iter < length; iter++) {
+          result[iter] = this.__pushOneOfModel(data[iter], store, schema);
+        }
+
+        meta.hasYielded = true;
+        return result;
+      });
+
     } else {
-      records.data = this._pushRecord(records.data, true);
+      meta.hasYielded = true;
     }
 
-    return updater.flush()
-      .then(() => { return records.data; });
+    return Promise.resolve(result);
+  }
+
+  pushRecords(records, trustPrimaryType = true) {
+    // instrument('pushRecords');
+    // loading related records first is much faster :troll:
+    // instrument('pushIncludes');
+    let pushedIncludes = this._pushMany(records.includes)
+      .then((records) => {
+        // instrument('pushIncludes');
+        return records;
+      });
+
+    // handle single record return
+    if (!records.data instanceof Array) {
+      records.data = this._pushRecord(records.data);
+
+      return pushedIncludes
+        .then(function() {
+          // instrument('updaterFlush');
+          return updater.flush();
+        })
+        .then(() => {
+          // instrument('updaterFlush');
+          // instrument('pushRecords');
+          return records.data;
+        });
+    }
+
+    // –––– handle multi record return
+
+    // optimized loop for trusty responses
+    if (trustPrimaryType) {
+      // instrument('pushTrusted');
+      return this.__pushManyOfModel(records.data)
+        .then((records) => {
+          // instrument('pushTrusted');
+          records.data = records;
+
+          return pushedIncludes
+            .then(function() {
+              // instrument('updaterFlush');
+              return updater.flush();
+            })
+            .then(() => {
+              // instrument('updaterFlush');
+              // instrument('pushRecords');
+              return records.data;
+            });
+        });
+
+    // unoptimized loop for non-trusty responses
+    } else {
+      // instrument('pushUntrusted');
+      return this._pushMany(records.data)
+        .then((records) => {
+          // instrument('pushUntrusted');
+          records.data = records;
+
+          return pushedIncludes
+            .then(function() {
+              // instrument('updaterFlush');
+              return updater.flush();
+            })
+            .then(() => {
+              // instrument('updaterFlush');
+              // instrument('pushRecords');
+              return records.data;
+            });
+        });
+    }
+
   }
 
 

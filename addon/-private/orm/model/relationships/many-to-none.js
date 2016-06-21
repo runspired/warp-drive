@@ -11,9 +11,7 @@ export class ManyToNone extends Relationship {
     this.modelName = this.modelName || singularize(this.prop);
   }
 
-  fulfill() {
-
-  }
+  fulfill() { console.log('nothing to fulfill here'); }
 
 }
 

@@ -6,7 +6,14 @@ module.exports = function(app, modelName) {
   var router = express.Router();
 
   router.get('/', function(req, res) {
-    res.send(app.store.findAll(modelName));
+    res.send(app.store.query(
+        modelName,
+        {
+          limit: req.query.limit || 250,
+          page: req.query.page || 0
+        }
+      ));
+
   });
 
   router.post('/', function(req, res) {

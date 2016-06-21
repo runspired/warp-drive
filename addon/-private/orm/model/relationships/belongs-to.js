@@ -3,6 +3,7 @@
 
 import Relationship from './-relationship';
 import { pluralize } from 'ember-inflector';
+import { measure } from '../../instrument';
 
 export class BelongsTo extends Relationship {
 
@@ -40,14 +41,18 @@ export class BelongsTo extends Relationship {
    or a fulfilled model / record array.
    */
   fulfill(record, indicator) {
+    // measure('lookupReference-belongsTo');
     let reference = this.recordStore.lookupReference(this.relatedModelName, indicator.id);
+    // measure('lookupReference-belongsTo');
 
     if (reference._isSparse) {
       reference._link(this, record);
 
+      /*
       if (this.options.autofetch) {
       //  reference.fetch();
       }
+      */
     }
 
     return reference;

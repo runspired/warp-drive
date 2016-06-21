@@ -2,7 +2,6 @@ import Ember from 'ember';
 
 const {
   Service,
-  inject
   } = Ember;
 
 export default Service.extend({
@@ -21,16 +20,35 @@ export default Service.extend({
       .pipe('findAll', schema, null, options);
   },
 
-  findRecord() {},
+  findRecord(modelName, id, options) {
+    let schema = this.data.schemaFor(modelName);
 
-  query() {},
+    return this.data.adapterFor(modelName)
+      .pipe('findRecord', schema, id, options);
+  },
 
-  queryRecord() {},
+  query(modelName, query, options) {
+    let schema = this.data.schemaFor(modelName);
+
+    return this.data.adapterFor(modelName)
+      .pipe('query', schema, query, options);
+  },
+
+  queryRecord(modelName, query, options) {
+    let schema = this.data.schemaFor(modelName);
+
+    return this.data.adapterFor(modelName)
+      .pipe('queryRecord', schema, query, options);
+  },
 
   pushPayload() {},
 
-  adapterFor() {},
+  adapterFor(modelName) {
+    return this.data.adapterFor(modelName);
+  },
 
-  serializerFor() {}
+  serializerFor(modelName) {
+    return this.data.serializerFor(modelName)
+  }
 
 });

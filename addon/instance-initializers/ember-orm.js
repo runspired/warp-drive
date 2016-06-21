@@ -21,7 +21,6 @@ export function initialize(instance) {
 
   // expose to all routes
   instance.inject('route', 'store', 'service:store');
-  instance.inject('route', 'orm', 'service:orm');
 
   if (store && !store.__isEmberOrmStore) {
     throw new Error(

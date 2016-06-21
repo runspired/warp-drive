@@ -31,7 +31,7 @@ function insertCatchLink(pipe, request, response, hooks, chain) {
 }
 
 
-function walkChain(context, request, response, methods, iter = 0) {
+function walkChain(context, request, response, methods, iter = 1) {
   let exe;
 
   while (iter < methods.length) {
@@ -55,9 +55,10 @@ function walkChain(context, request, response, methods, iter = 0) {
 }
 
 export default function syncline(pipe, methods, initialArgs) {
+  console.log('\n\n-----------------------------\n\n');
   return RSVP.Promise.resolve()
     .then(() => {
-      let firstStep = methods.shift();
+      let firstStep = methods[0];
       let request = pipe[firstStep](...initialArgs);
       let response = {};
 

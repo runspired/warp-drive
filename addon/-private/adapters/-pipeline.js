@@ -1,5 +1,5 @@
 import RSVP from 'rsvp';
-import asap from '../ember-internals/asap';
+import asap from '../ember/asap';
 
 RSVP.configure('async', function(callback, promise) {
   asap(function() { callback(promise); });

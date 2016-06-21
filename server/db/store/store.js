@@ -58,6 +58,10 @@ Store.prototype.findAll = function findAll(namespace) {
   return this.namespaceFor(namespace).findAll();
 };
 
+Store.prototype.query = function query(namespace, query) {
+  return this.namespaceFor(namespace).query(query);
+};
+
 Store.prototype.deleteRecord = function deleteRecord(namespace, id) {
   this.namespaceFor(namespace).deleteRecord(id);
 };

@@ -2,6 +2,7 @@
 // foo has a bar
 
 import Relationship from './-relationship';
+import { measure } from '../../instrument';
 
 export class OneToOne extends Relationship {
 
@@ -39,7 +40,9 @@ export class OneToOne extends Relationship {
    or a fulfilled model / record array.
    */
   fulfill(record, indicator) {
+    // measure('lookupReference-one');
     let reference = this.recordStore.lookupReference(this.relatedModelName, indicator.id);
+    // measure('lookupReference-one');
 
     if (reference._isSparse) {
       reference._link(this, record);

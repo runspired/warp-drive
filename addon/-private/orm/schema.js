@@ -4,60 +4,54 @@ import EditableModel from './model/editable-model';
 import Relationship from './model/relationships/-relationship';
 import Ember from 'ember';
 import { ModelReferenceSymbol } from '../orm/model/relationships/joins/sparse-model';
-
-import { EDITABLE } from './model/symbols';
+import updater from './updater';
+import { measure } from './instrument';
+import EmptyObject from '../ember/empty-object';
 
 const {
   get
   } = Ember;
 
-class FlushTask {
+function makeShape(schema, BaseClass, shape) {
+  let keys = Object.keys(shape);
+  let props = [];
+  let attrs = [];
 
-  constructor(size) {
-    this.work = new Array(size);
-    this._flush = this.flush();
-    this.length = 0;
-    this.maxLength = size;
-  }
+  for (let i = 0; i < keys.length; i++) {
+    let key = keys[i];
 
-  push(job) {
-    let length = this.length++;
-
-    if (length > this.maxLength) {
-      this.maxLength *= 2;
-      this.work.length = this.maxLength;
-    }
-
-    this.work[length] = job;
-    if (!this._flush) {
-      this._flush = this.flush();
+    if (typeof shape[key] === 'function') {
+      props.push(key);
+    } else {
+      attrs.push(key);
     }
   }
 
-  pop() {
-    return this.work[--this.length];
+  function ArtificialShape(data) {
+    if (data) {
+      this.id = data.id;
+      for (let i = 0; i < attrs.length; i++) {
+        let attr = attrs[i];
+
+        this[attr] = data[attr] || shape[attr];
+      }
+    }
+
+  }
+  ArtificialShape.prototype = new BaseClass();
+  ArtificialShape.prototype.__schema = schema;
+
+  for (let i = 0; i < props.length; i++) {
+    let prop = props[i];
+    ArtificialShape.prototype[prop] = shape[prop];
   }
 
-  flush() {
-    return Promise.resolve()
-      .then(() => {
-        let job;
-        while (job = this.pop()) {
-          job();
-        }
-        this._flush = false;
-      });
-  }
-
+  return ArtificialShape;
 }
-
-const updater = new FlushTask(500);
-
-export { updater };
 
 export class Schema {
 
-  constructor(shape, options = {}) {
+  constructor(shape, options = new EmptyObject()) {
     this.modelName = options.modelName;
     this.attributes = null;
     this.relationships = null;
@@ -70,8 +64,8 @@ export class Schema {
 
   _create(shape, options) {
     let keys = Object.keys(shape);
-    let attributes = Object.create(null);
-    let relationships = Object.create(null);
+    let attributes = new EmptyObject();
+    let relationships = new EmptyObject();
 
     for (let i = 0; i < keys.length; i++) {
       let key = keys[i];
@@ -97,50 +91,12 @@ export class Schema {
     this.createFromShape = typeof shape.create === 'function' && shape._isEmberOrmModel;
 
     if (!this.createFromShape) {
-      this._artificialShape = this.createArtificialShape(options.editable ? EditableModel : Model, shape, options);
+      this._artificialShape = makeShape.call(null, this, (options.editable ? EditableModel : Model), shape);
     }
-  }
-
-  createArtificialShape(BaseClass, shape, options) {
-    let keys = Object.keys(shape);
-    let props = [];
-    let attrs = [];
-    let schema = this;
-
-    for (let i = 0; i < keys.length; i++) {
-      let key = keys[i];
-
-      if (typeof shape[key] === 'function') {
-        props.push(key);
-      } else {
-        attrs.push(key);
-      }
-    }
-
-    class ArtificialShape extends BaseClass {
-      constructor(data = {}) {
-        super(schema);
-        this[EDITABLE] = options.editable;
-
-        this.id = data.id;
-        for (let i = 0; i < attrs.length; i++) {
-          let attr = attrs[i];
-
-          this[attr] = data[attr] || shape[attr];
-        }
-      }
-    }
-
-    for (let i = 0; i < props.length; i++) {
-      let prop = props[i];
-      ArtificialShape.prototype[prop] = shape[prop];
-    }
-
-    return ArtificialShape;
   }
 
   cloneRecord(record) {
-    let modelData = {};
+    let modelData = new EmptyObject();
 
     if (!this.createFromShape) {
       for (let attrKey in this.attributes) {
@@ -171,34 +127,36 @@ export class Schema {
     }
   }
 
-  generateRecord(jsonApiReference, flushRelationships) {
-    let preppedData = this._prepRecordData(jsonApiReference);
-    preppedData.id = jsonApiReference.id;
+  generateRecord(doc) {
+
+    let preppedData = new EmptyObject();
+
+    if (doc.attributes) {
+      for (let attrKey in this.attributes) {
+        let attr = this.attributes[attrKey];
+
+        preppedData[attrKey] = doc.attributes[attrKey] || getDefaultValue(attr);
+      }
+    }
+    preppedData.id = doc.id;
 
     let record = this._generateRecord(preppedData);
 
     // ensures we don't populate relationships until after
-    if (jsonApiReference.relationships) {
-      if (flushRelationships) {
-        this._populateRelationships(record, jsonApiReference);
-      } else {
-        updater.push(() => {
-          this._populateRelationships(record, jsonApiReference);
-        });
-      }
+    if (doc.relationships) {
+      updater.schedule(this, this._populateRelationships, record, doc);
     }
 
     return record;
   }
 
-
-
-  updateRecord(record, jsonApiReference, flushRelationships) {
+  updateRecord(record, doc) {
     let trueRecord;
+    measure('updateRecord');
 
     if (record._isSparse) {
-      console.log('splicing out sparse record');
-      trueRecord = this.generateRecord(jsonApiReference, flushRelationships);
+      console.warn('splicing out sparse record');
+      trueRecord = this.generateRecord(doc);
 
       // swap references
       let links = record[ModelReferenceSymbol].links;
@@ -223,48 +181,39 @@ export class Schema {
       trueRecord = record;
 
       for (let attrKey in this.attributes) {
-        record[attrKey] = jsonApiReference.attributes[attrKey];
+        record[attrKey] = doc.attributes[attrKey];
       }
 
       for (let relKey in this.relationships) {
-        let info = jsonApiReference.relationships[relKey];
+        let info = doc.relationships[relKey];
         // debugger;
         record[relKey];
       }
 
     }
 
+    measure('updateRecord');
     return trueRecord;
   }
 
 
 
-  _populateRelationships(record, jsonApiReference) {
+  _populateRelationships(record, doc) {
+    // measure('_populateRelationships');
     let keys = Object.keys(this.relationships);
 
     for (let i = 0; i < keys.length; i++) {
       let relKey = keys[i];
       let rel = this.relationships[relKey];
 
-      record[relKey] = jsonApiReference.relationships[relKey] ?
-        rel.fulfill(record, jsonApiReference.relationships[relKey].data) : undefined;
-    }
-  }
-
-
-
-  _prepRecordData(jsonApiReference) {
-    let modelData = {};
-
-    if (jsonApiReference.attributes) {
-      for (let attrKey in this.attributes) {
-        let attr = this.attributes[attrKey];
-
-        modelData[attrKey] = jsonApiReference.attributes[attrKey] || getDefaultValue(attr);
+      if (doc.relationships[relKey]) {
+        // measure('rel.fulfill');
+        record[relKey] = rel.fulfill(record, doc.relationships[relKey].data);
+        // measure('rel.fulfill');
       }
     }
 
-    return modelData;
+    // measure('_populateRelationships');
   }
 
 }

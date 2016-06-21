@@ -1,5 +1,6 @@
 {
   "name": "ember-orm",
+  "namespace": "ORM",
   "version": "0.0.0",
   "description": "The default blueprint for ember-cli addons.",
   "directories": {
