@@ -6,7 +6,7 @@ const {
 
 export default Service.extend({
 
-  __isEmberOrmStore: true,
+  __isWarpDriveStore: true,
   data: null,
 
   createRecord() {},

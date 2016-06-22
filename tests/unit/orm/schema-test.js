@@ -1,6 +1,6 @@
-import Schema from 'ember-orm/-private/orm/schema';
-import { manyToNone, ManyToNone } from 'ember-orm/-private/orm/model/relationships/many-to-none';
-import { oneToNone } from 'ember-orm/-private/orm/model/relationships/one-to-none';
+import Schema from 'warp-drive/-private/orm/schema';
+import { manyToNone, ManyToNone } from 'warp-drive/-private/orm/model/relationships/many-to-none';
+import { oneToNone } from 'warp-drive/-private/orm/model/relationships/one-to-none';
 
 import { module, test } from 'qunit';
 

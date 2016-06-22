@@ -1,4 +1,4 @@
-import Model from 'ember-orm/-private/orm/model/relationships/joins/sparse-array';
+import Model from 'warp-drive/-private/orm/model/relationships/joins/sparse-array';
 import { module, test } from 'qunit';
 
 module('Unit | orm | sparse-array', {

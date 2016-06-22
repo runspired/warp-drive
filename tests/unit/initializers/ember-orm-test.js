@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import EmberOrmInitializer from 'dummy/initializers/ember-orm';
+import WarpDriveInitializer from 'dummy/initializers/warp-drive';
 import { module, test } from 'qunit';
 
 let application;
@@ -15,7 +15,7 @@ module('Unit | Initializer | ember orm', {
 
 // Replace this with your real tests.
 test('it works', function(assert) {
-  EmberOrmInitializer.initialize(application);
+  WarpDriveInitializer.initialize(application);
 
   // you would normally confirm the results of the initializer here
   assert.ok(true);

@@ -1,1 +1,1 @@
-export { default, initialize } from 'ember-orm/instance-initializers/ember-orm';
+export { default, initialize } from 'warp-drive/instance-initializers/warp-drive';

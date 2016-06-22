@@ -1,4 +1,4 @@
-import { attr, oneToOne, hasMany } from 'ember-orm/schema';
+import { attr, oneToOne, hasMany } from 'warp-drive/schema';
 
 export default {
   name: attr(),

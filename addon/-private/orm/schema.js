@@ -88,7 +88,7 @@ export class Schema {
     this.relationships = relationships;
     this.shape = shape;
 
-    this.createFromShape = typeof shape.create === 'function' && shape._isEmberOrmModel;
+    this.createFromShape = typeof shape.create === 'function' && shape._isWarpDriveModel;
 
     if (!this.createFromShape) {
       this._artificialShape = makeShape.call(null, this, (options.editable ? EditableModel : Model), shape);

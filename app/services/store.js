@@ -1,1 +1,1 @@
-export { default } from 'ember-orm/services/store';
+export { default } from 'warp-drive/services/store';

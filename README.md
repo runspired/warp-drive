@@ -1,18 +1,27 @@
-# Ember-orm
+# Warp Drive [WIP]
 
-This is a **VERY WIP** experimental alternative to ember-data with better
- support for sparse, immutable, and lightweight records.
+A lightweight, blazing fast, extensible, and powerful Request Layer and Data Store
 
-This project is going to attempt to closely parallel many of ember-data's
-official public APIs so that conversion between them is possible. It will
-likely never be seamless.
+## First Principles
+
+This data store is being constructed along the following "first principles"
+
+- It must have a small footprint.
+- It must be blazing fast, even on Android.
+- It must be able to work in any environment (Browser, ServiceWorker, WebWorker, Node).
+- It should encourage explicitly defined behaviors and interactions.
+- Data should be immutable unless clear change or alteration signals are given.
+- You shouldn't have a separate ORM and request layer for your Mock.
+- It must handle sparse data like a champ.
 
 The internals of this project are pure JS, mostly ES6 classes, not Ember
 Objects.  This is done so that this ORM can run client or server side,
 with or without Ember.  This will make it easy to have a mock API running
 via the http-mock setup or via pretender / web-worker / service-worker.
 
-The exposed `Ember` primitives are thin service wrappers around this core.
+The exposed `Ember` primitives are thin service wrappers around a "pure JS"
+core, and will be separated into their own addon consuming Warp-Drive when
+this is ready to ship.
 
 ## Models
 
@@ -28,7 +37,7 @@ are considered part of the model's schema.  You can define other properties,
 but they will not be persisted with the model.
 
 ```js
-import { attr } from 'ember-orm/model';
+import { attr } from 'warp-drive/model';
 
 export default {
   foo: attr()
@@ -45,7 +54,7 @@ other meta about a property for such purposes.
 
 ### Relationships
 
-Ember-orm relied on a more verbose pattern of defining relationships in
+Warp Drive relies on a more verbose pattern of defining relationships in
 order to be able to best determine what kind of link to create between
 the involved records.
 
@@ -56,7 +65,7 @@ All relationships take two optional parameters: `<relatedModelName>` and
 **Usage**
 
 ```js
-import { oneToOne } from 'ember-orm/model';
+import { oneToOne } from 'warp-drive/model';
 
 export default {
   foo: oneToOne('foo', { inverse: 'bar' })
@@ -74,7 +83,7 @@ export default {
 
 **inverse**
 
-If `options.inverse` is not defined, ember-orm attempts to build the inverse
+If `options.inverse` is not defined, warp-drive attempts to build the inverse
 based on the type of relationship specified, the `property` it was attached with
  and the `relatedModelName`.
 
@@ -93,13 +102,3 @@ call `fetch` on the relationship to load it.
 
 Models are immutable (uneditable) by default, to make a model editable
 you must flag it as editable.
-
-**flagging for editing**
-
-```js
-import { EDITABLE } from 'ember-orm/model';
-
-export default {
-  [EDITABLE]: true
-}
-```

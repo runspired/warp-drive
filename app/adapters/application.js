@@ -1,1 +1,1 @@
-export { default } from 'ember-orm/-private/adapters/adapter';
+export { default } from 'warp-drive/-private/adapters/adapter';

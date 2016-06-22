@@ -1,1 +1,1 @@
-export { default } from 'ember-orm/-private/serializers/json-api';
+export { default } from 'warp-drive/-private/serializers/json-api';

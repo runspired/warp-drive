@@ -1,4 +1,4 @@
-import { attr } from 'ember-orm/schema';
+import { attr } from 'warp-drive/schema';
 
 export default {
   title: attr(),

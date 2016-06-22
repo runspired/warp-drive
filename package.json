@@ -1,8 +1,8 @@
 {
-  "name": "ember-orm",
-  "namespace": "ORM",
+  "name": "warp-drive",
+  "namespace": "WARPDRIVE",
   "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "description": "A lightweight, blazing fast, extensible, and powerful Request Layer and Data Store",
   "directories": {
     "doc": "doc",
     "test": "tests"

@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import { initialize } from 'dummy/instance-initializers/ember-orm';
+import { initialize } from 'dummy/instance-initializers/warp-drive';
 import { module, test } from 'qunit';
 import destroyApp from '../../helpers/destroy-app';
 

@@ -1,6 +1,6 @@
-import Schema from 'ember-orm/-private/orm/schema';
-import RecordStore from 'ember-orm/-private/orm/record-store';
-import Relationship from 'ember-orm/-private/orm/model/relationships/-relationship';
+import Schema from 'warp-drive/-private/orm/schema';
+import RecordStore from 'warp-drive/-private/orm/record-store';
+import Relationship from 'warp-drive/-private/orm/model/relationships/-relationship';
 import Ember from 'ember';
 
 const {
@@ -22,9 +22,9 @@ export function initialize(instance) {
   // expose to all routes
   instance.inject('route', 'store', 'service:store');
 
-  if (store && !store.__isEmberOrmStore) {
+  if (store && !store.__isWarpDriveStore) {
     throw new Error(
-      'You installed ember-orm, but another `store` service is overriding it.' +
+      'You installed warp-drive, but another `store` service is overriding it.' +
       '  You may need to uninstall ember-data: `npm uninstall --save-dev ember-data`'
     );
   }
@@ -32,6 +32,6 @@ export function initialize(instance) {
 }
 
 export default {
-  name: 'ember-orm',
+  name: 'warp-drive',
   initialize
 };
