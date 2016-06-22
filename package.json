@@ -1,7 +1,7 @@
 {
   "name": "warp-drive",
   "namespace": "WARPDRIVE",
-  "version": "0.0.0",
+  "version": "0.0.0-beta.1",
   "description": "A lightweight, blazing fast, extensible, and powerful Request Layer and Data Store",
   "directories": {
     "doc": "doc",
