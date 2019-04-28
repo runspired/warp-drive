@@ -5,7 +5,6 @@ dist
 tmp
 
 # dependencies
-bower_components
 node_modules
 
 # misc
@@ -21,17 +20,12 @@ yarn-error.log
 
 # ember-try
 .node_modules.ember-try/
-bower.json.ember-try
 package.json.ember-try
-
-# ember-data specific
-benchmarks/results/*.json
 
 .DS_Store
 
 .github-upload-token
 *.swp
-docs/build/
 .metadata_never_index
 
 DEBUG
