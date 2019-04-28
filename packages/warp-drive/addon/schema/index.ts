@@ -25,6 +25,21 @@ Where does Schema go?
   - Cache honestly doesn't need it
   - Mostly a UI Concern, Sometimes a Normalization / Serialization Concern
 
+An Interpreter is responsible for converting cache data
+ into UI objects.
+
+The Interpreter has access to a user-land service with hooks.
+The Interpreter has access to user-land defined schemas.
+
+Schemas may have:
+
+- attributes
+- relationships
+- type
+- defaultValues
+- aliases
+- transforms for attributes
+
 M3 {
   computeAttributeReference()
   computeNestedModel()

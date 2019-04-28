@@ -3,11 +3,11 @@ import { DEBUG } from '@glimmer/env';
 import lazyProp from 'ember-private-state/lazy-prop';
 import { isPrivate, DebugProxy } from 'ember-private-state/debug';
 
-type nextFn = (request: Request) => Promise<RequestResponse>;
+export type nextFn = (request: Request) => Promise<RequestResponse>;
 
 export interface RequestResponse {
   data?: Document;
-  error: Error;
+  error?: Error;
 }
 
 export interface RequestMiddleware {
@@ -17,16 +17,16 @@ export interface RequestMiddleware {
 export interface MutationRequest {
   type: 'mutation';
   ops: Operation[];
-  cache: Cache;
+  cache?: Cache;
 }
 
 export interface QueryRequest {
   type: 'query';
-  cache: Cache;
+  cache?: Cache;
 }
 export type Request = MutationRequest | QueryRequest;
 
-async function perform(
+function perform(
   wares: Readonly<RequestMiddleware[]>,
   request: Request,
   i: number = 0
@@ -53,12 +53,7 @@ function waresFor(manager: RequestManager): RequestMiddleware[] {
   return map;
 }
 
-export interface RequestManager {
-  use(middleware: RequestMiddleware): void;
-  request(request: Request): Promise<RequestResponse>;
-}
-
-class _RequestManager implements RequestManager {
+class RequestManager {
   use(middleware: RequestMiddleware): void {
     let map = waresFor(this);
     map.push(middleware);
@@ -71,9 +66,9 @@ class _RequestManager implements RequestManager {
     return DEBUG ? Object.freeze(map) : map;
   }
 
-  async request(request: Request) {
-    return await perform(this._wares, request);
+  request(request: Request): Promise<RequestResponse> {
+    return perform(this._wares, request);
   }
 }
 
-export default (DEBUG ? (DebugProxy(_RequestManager) as RequestManager) : _RequestManager);
+export default (DEBUG ? DebugProxy<typeof RequestManager>(RequestManager) : RequestManager);

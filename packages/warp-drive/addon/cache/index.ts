@@ -13,6 +13,7 @@ import { DEBUG } from '@glimmer/env';
 import lazyProp from 'ember-private-state/lazy-prop';
 import { DebugProxy, isPrivate } from 'ember-private-state/debug';
 import { isDocumentOperation, isRecordOperation, isRelationshipOperation } from './utils';
+import Graph from '../graph';
 
 /*
   I think we just want a two level cache
