@@ -1,5 +1,5 @@
 {
-  "name": "warp-drive-root",
+  "name": "root",
   "private": true,
   "version": "0.0.0",
   "description": "Fast Data Layer for Javascript Applications",
