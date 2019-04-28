@@ -16,15 +16,25 @@
     "build": "ember build",
     "lint:hbs": "ember-template-lint .",
     "lint:js": "eslint .",
-    "start": "ember serve",
-    "test": "ember test",
-    "test:all": "ember try:each"
+    "start": "ember build --watch",
+    "test": "ember exam --serve --path='./dist' --no-launch",
+    "test:all": "ember try:each",
+    "prepublishOnly": "ember ts:precompile",
+    "postpublish": "ember ts:clean"
   },
   "dependencies": {
-    "ember-cli-babel": "^7.1.2"
+    "ember-cli-babel": "^7.1.2",
+    "ember-cli-typescript": "^2.0.1"
   },
   "devDependencies": {
     "@ember/optional-features": "*",
+    "@types/ember": "*",
+    "@types/ember-qunit": "*",
+    "@types/ember-test-helpers": "*",
+    "@types/ember-testing-helpers": "*",
+    "@types/ember__test-helpers": "*",
+    "@types/qunit": "*",
+    "@types/rsvp": "*",
     "broccoli-asset-rev": "*",
     "ember-cli": "*",
     "ember-cli-dependency-checker": "*",
@@ -34,8 +44,10 @@
     "ember-cli-inject-live-reload": "*",
     "ember-cli-sri": "*",
     "ember-cli-template-lint": "*",
+    "ember-cli-typescript-blueprints": "*",
     "ember-cli-uglify": "*",
     "ember-disable-prototype-extensions": "*",
+    "ember-exam": "*",
     "ember-export-application-global": "*",
     "ember-load-initializers": "*",
     "ember-maybe-import-regenerator": "*",
@@ -47,7 +59,8 @@
     "eslint-plugin-ember": "*",
     "eslint-plugin-node": "*",
     "loader.js": "*",
-    "qunit-dom": "*"
+    "qunit-dom": "*",
+    "typescript": "^3.4.5"
   },
   "engines": {
     "node": ">= 10.*"
