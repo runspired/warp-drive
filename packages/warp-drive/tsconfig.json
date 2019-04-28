@@ -3,6 +3,7 @@
     "target": "es2017",
     "allowJs": true,
     "moduleResolution": "node",
+    "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
@@ -20,28 +21,13 @@
     "baseUrl": ".",
     "module": "es6",
     "paths": {
-      "dummy/tests/*": [
-        "tests/*"
-      ],
-      "dummy/*": [
-        "tests/dummy/app/*",
-        "app/*"
-      ],
-      "warp-drive": [
-        "addon"
-      ],
-      "warp-drive/*": [
-        "addon/*"
-      ],
-      "warp-drive/test-support": [
-        "addon-test-support"
-      ],
-      "warp-drive/test-support/*": [
-        "addon-test-support/*"
-      ],
-      "*": [
-        "types/*"
-      ]
+      "dummy/tests/*": ["tests/*"],
+      "dummy/*": ["tests/dummy/app/*", "app/*"],
+      "warp-drive": ["addon"],
+      "warp-drive/*": ["addon/*"],
+      "warp-drive/test-support": ["addon-test-support"],
+      "warp-drive/test-support/*": ["addon-test-support/*"],
+      "*": ["types/*"]
     }
   },
   "include": [

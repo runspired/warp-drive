@@ -24,7 +24,8 @@
   },
   "dependencies": {
     "ember-cli-babel": "^7.1.2",
-    "ember-cli-typescript": "^2.0.1"
+    "ember-cli-typescript": "^2.0.1",
+    "ember-private-state": "^0.0.1"
   },
   "devDependencies": {
     "@ember/optional-features": "*",
@@ -38,7 +39,6 @@
     "broccoli-asset-rev": "*",
     "ember-cli": "*",
     "ember-cli-dependency-checker": "*",
-    "ember-cli-eslint": "*",
     "ember-cli-htmlbars": "*",
     "ember-cli-htmlbars-inline-precompile": "*",
     "ember-cli-inject-live-reload": "*",
@@ -56,8 +56,6 @@
     "ember-source": "*",
     "ember-source-channel-url": "*",
     "ember-try": "*",
-    "eslint-plugin-ember": "*",
-    "eslint-plugin-node": "*",
     "loader.js": "*",
     "qunit-dom": "*",
     "typescript": "^3.4.5"

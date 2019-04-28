@@ -752,6 +752,11 @@
   resolved "https://registry.npmjs.org/@glimmer/di/-/di-0.2.1.tgz#5286b6b32040232b751138f6d006130c728d4b3d"
   integrity sha512-0D53YVuEgGdHfTl9LGWDZqVzGhn4cT0CXqyAuOYkKFLvqboJXz6SnkRhQNPhhA2hLVrPnvUz3+choQmPhHLGGQ==
 
+"@glimmer/env@^0.1.7":
+  version "0.1.7"
+  resolved "https://registry.npmjs.org/@glimmer/env/-/env-0.1.7.tgz#fd2d2b55a9029c6b37a6c935e8c8871ae70dfa07"
+  integrity sha1-/S0rVakCnGs3psk16MiHGucN+gc=
+
 "@glimmer/interfaces@^0.35.11":
   version "0.35.11"
   resolved "https://registry.npmjs.org/@glimmer/interfaces/-/interfaces-0.35.11.tgz#063a6fd1af1f660604c9f9d3d93fbc1f6509777a"
@@ -3546,7 +3551,7 @@ ember-cli-typescript-blueprints@*, ember-cli-typescript-blueprints@^2.0.0:
     inflection "^1.12.0"
     silent-error "^1.1.0"
 
-ember-cli-typescript@^2.0.1:
+ember-cli-typescript@^2.0.0, ember-cli-typescript@^2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/ember-cli-typescript/-/ember-cli-typescript-2.0.1.tgz#9c46729213b9e1d13f5c3ff8421d772134aa889e"
   integrity sha512-xwSEQOUNM621Wt+XJWpbLhBIeqC/dM1lDS+oZQ2nSjxp4MLZkpKuiVBqdbBWcURbvv8ghoVQPfy8wYU4JIFkLA==
@@ -3734,6 +3739,15 @@ ember-maybe-import-regenerator@*, ember-maybe-import-regenerator@^0.1.6:
     broccoli-merge-trees "^1.0.0"
     ember-cli-babel "^6.0.0-beta.4"
     regenerator-runtime "^0.9.5"
+
+ember-private-state@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.npmjs.org/ember-private-state/-/ember-private-state-0.0.1.tgz#029331df43983067e9c5f18f3599c4fdf32058d3"
+  integrity sha512-P91OgFvMLRJYW5I7PImvMdERQ7WosRV+nO3IwMeUnd7JdRITZRjs2M4/wD9AeeeHDIbbSbkqzGA1jVHVps5JAw==
+  dependencies:
+    "@glimmer/env" "^0.1.7"
+    ember-cli-babel "^7.1.2"
+    ember-cli-typescript "^2.0.0"
 
 ember-qunit@*, ember-qunit@^4.4.1:
   version "4.4.1"
